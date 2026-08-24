@@ -15,6 +15,11 @@ public class GameManager : MonoBehaviour
     public bool IsGameOver { get; private set; }
     public int DeathCount { get; private set; }
 
+    // Set when the run ends. DidWin tells the UI which screen to show;
+    // LoseReason is a short tag ("time", etc) so we can vary the message later.
+    public bool DidWin { get; private set; }
+    public string LoseReason { get; private set; }
+
     [Header("Respawn")]
     [SerializeField] private Transform defaultSpawnPoint; // drag an empty GameObject at the level start
     private Vector3 currentCheckpoint;
@@ -34,6 +39,8 @@ public class GameManager : MonoBehaviour
         TimeRemaining = startingTime;
         IsGameOver = false;
         DeathCount = 0;
+        DidWin = false;
+        LoseReason = null;
         currentCheckpoint = defaultSpawnPoint != null ? defaultSpawnPoint.position : Vector3.zero;
     }
 
@@ -70,20 +77,36 @@ public class GameManager : MonoBehaviour
     {
         if (IsGameOver) return;
         IsGameOver = true;
+        DidWin = true;
         Debug.Log("Reached school in time. Level complete!");
-        // TODO later: show win screen / load next level
+        // ResultUI picks this up automatically and shows the win screen.
     }
 
     public void LoseGame(string reason)
     {
         if (IsGameOver) return;
         IsGameOver = true;
+        DidWin = false;
+        LoseReason = reason;
         Debug.Log($"Game over. Reason: {reason}");
-        // TODO later: show lose screen
+        // ResultUI picks this up automatically and shows the lose screen.
     }
 
     public void RestartLevel()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        Scene active = SceneManager.GetActiveScene();
+
+        // buildIndex is -1 when the scene isn't in File > Build Settings, and
+        // LoadScene(-1) throws a confusing exception. Log the real cause first
+        // so whoever adds a new level knows exactly what they forgot.
+        if (active.buildIndex >= 0)
+        {
+            SceneManager.LoadScene(active.buildIndex);
+        }
+        else
+        {
+            Debug.LogWarning($"Scene '{active.name}' is not in Build Settings. Add it before building!");
+            SceneManager.LoadScene(active.name);
+        }
     }
 }

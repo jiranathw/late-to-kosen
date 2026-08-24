@@ -13,6 +13,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float groundCheckRadius = 0.15f;
     [SerializeField] private LayerMask groundLayer;   // set to the "Ground" layer
 
+    [Header("Fall Safety")]
+    // Falling off the level counts as a death instead of dropping forever.
+    // Keep this comfortably below the lowest platform in the level.
+    [SerializeField] private float killY = -20f;
+
     private Rigidbody2D rb;
     private bool isGrounded;
     private float moveInput;
@@ -24,7 +29,19 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.IsGameOver) return;
+        if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
+        {
+            moveInput = 0f; // stop sliding once the run is over
+            return;
+        }
+
+        // Fell off the map: treat it exactly like walking into a trap.
+        if (transform.position.y < killY)
+        {
+            GameManager.Instance?.PlayerDied();
+            Respawn();
+            return;
+        }
 
         // Default Input Manager: Horizontal = A/D and Left/Right arrows
         moveInput = Input.GetAxisRaw("Horizontal");
