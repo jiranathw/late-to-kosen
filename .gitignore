@@ -1,0 +1,36 @@
+# Unity generated folders — safe to ignore, Unity regenerates them
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Mm]emoryCaptures/
+/[Uu]serSettings/
+
+# Visual Studio / Rider cache
+.vs/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Unity crash logs
+sysinfo.txt
+*.stackdump
+
+# Packages lock (keep this one tracked instead — only ignore if it causes issues)
+# /[Pp]ackages/packages-lock.json
