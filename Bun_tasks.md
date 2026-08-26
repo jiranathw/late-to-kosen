@@ -2,6 +2,51 @@
 **ID:** 17 | **Role:** Artist & UI Designer
 **Last updated: 25 Aug 2026 | Deadline: 31 Aug 2026 (hard) | 6 days left — you're starting today, not day 1, so move fast**
 
+---
+
+## UPDATE 26 Aug 2026 — read this before the older notes below
+
+**Import settings matter more than the drawings.** For every PNG, in the Inspector:
+
+- **Texture Type = Sprite (2D and UI)**
+- **Filter Mode = Point (no filter)** — without this your pixel art comes out blurry
+  and it stops being 8-bit, which is what the form promised
+- **Compression = None** — same reason
+- **Pixels Per Unit identical across every file** — mixing values makes objects
+  scale wrong relative to each other and it is painful to fix later
+
+**Drop art on the prefabs in `Assets/Prefabs`, never on objects in the scene.**
+Every object in the level is a prefab instance, so changing the parent prefab's
+Sprite field updates all of them at once. Touching the scene instead means editing
+44 objects by hand and risking a merge conflict with Krin.
+
+**The art list has grown.** Prefabs that need a sprite:
+
+| Prefab | Notes |
+|---|---|
+| `Ground` | platform / campus tile |
+| `PlatformFake` | **must use the exact same sprite as `Ground`** — if the player can tell it apart, the trap doesn't work |
+| `Trap` | obviously dangerous |
+| `TrapHidden` | invisible in play; the sprite only shows after it kills you, so make it read as "gotcha" |
+| `TrapSpike` | spikes that rise out of the ground |
+| `Bicycle` | pickup, should read as collectable rather than scenery |
+| `Checkpoint1` | has an armed/unarmed colour state already |
+| `Goal` | school gate, 2 units wide by 3 tall |
+| Player | idle + run frames |
+| Background | one static image is fine |
+
+**HUD is already built and styled in code** (`HudUI.cs`) — lives icons, sprint bar,
+score, bicycle timer. You are not rebuilding it. If you want a different look,
+talk to TJ rather than adding Canvas objects to the scene, because the HUD creates
+itself at runtime and anything you add in the scene will sit underneath it.
+
+**All in-game text must stay English.** The bundled TMP font has no Thai glyphs —
+Thai text renders as empty boxes. Same for symbols like hearts, which is why lives
+are drawn as coloured blocks rather than heart characters. If you want Thai text or
+a custom font, it has to be imported as a TMP Font Asset first; tell TJ.
+
+---
+
 ## First: get access (do this before anything else)
 1. Check email / GitHub notifications for a collaborator invite to `late-to-kosen` — accept it. The repo is Private, you can't see it at all without accepting.
 2. Install Unity Hub if you don't have it, then install Unity **6000.4.11f1** via Hub → Installs tab (must match this exact version).

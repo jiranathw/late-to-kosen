@@ -1,0 +1,25 @@
+# Unity YAML assets: keep LF and never let git "merge" them.
+# A merged .unity or .prefab is a corrupt .unity or .prefab.
+*.unity      -text merge=binary diff
+*.prefab     -text merge=binary diff
+*.asset      -text merge=binary diff
+*.mat        -text merge=binary diff
+*.anim       -text merge=binary diff
+*.controller -text merge=binary diff
+*.meta       -text merge=binary diff
+
+# Source and docs: normalise line endings so Windows/macOS don't fight.
+*.cs   text diff=csharp
+*.md   text
+*.txt  text
+*.json text
+*.py   text
+
+# Binary art/audio.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.psd  binary
+*.wav  binary
+*.mp3  binary
+*.ogg  binary

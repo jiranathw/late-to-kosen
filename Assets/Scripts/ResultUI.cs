@@ -125,13 +125,28 @@ public class ResultUI : MonoBehaviour
         {
             headline.text = "YOU MADE IT!";
             headline.color = new Color(0.55f, 1f, 0.6f);
-            detail.text = $"{FormatTime(gm.TimeRemaining)} to spare\nDeaths: {gm.DeathCount}\n\n{RestartHint}";
+            detail.text =
+                $"Made it with {FormatTime(gm.TimeRemaining)} to spare, {gm.Lives} lives left\n" +
+                $"Traps survived: {gm.TrapsSurvived}/{gm.TrapTotal}    Deaths: {gm.DeathCount}\n" +
+                $"SCORE  {gm.Score}\n\n{RestartHint}";
+        }
+        else if (gm.LoseReason == "lives")
+        {
+            headline.text = "OUT OF LIVES";
+            headline.color = new Color(1f, 0.45f, 0.45f);
+            detail.text =
+                $"The traps got you three times. You're not going anywhere.\n" +
+                $"Traps survived: {gm.TrapsSurvived}/{gm.TrapTotal}\n" +
+                $"SCORE  {gm.Score}\n\n{RestartHint}";
         }
         else
         {
             headline.text = "THE BELL RANG";
             headline.color = new Color(1f, 0.45f, 0.45f);
-            detail.text = $"You were late.\nDeaths: {gm.DeathCount}\n\n{RestartHint}";
+            detail.text =
+                $"You were late. Lives left: {gm.Lives}\n" +
+                $"Traps survived: {gm.TrapsSurvived}/{gm.TrapTotal}    Deaths: {gm.DeathCount}\n" +
+                $"SCORE  {gm.Score}\n\n{RestartHint}";
         }
 
         group.alpha = 1f;
