@@ -2,6 +2,11 @@
 **ID:** 21 | **Role:** Level Designer & Project Manager
 **Last updated: 25 Aug 2026 | Deadline: 31 Aug 2026 (hard) | 6 days left — you're starting today, not day 1, so move fast**
 
+> **27 Aug 2026 — 4 days to deadline.** All programming promised on the
+> design form is done and pushed (`ec3025b`). Project-wide status lives in
+> **`PROGRESS.md`**; read that first, then the section below.
+
+
 ---
 
 ## UPDATE 26 Aug 2026 — read this before the older notes below

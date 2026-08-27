@@ -1,6 +1,6 @@
 # TJ — Programmer Tasks (Late to KOSEN)
 **ID:** 09 | **Role:** Programmer
-**Last updated: 26 Aug 2026 | Deadline: 31 Aug 2026 (hard, no extension) | 5 days left**
+**Last updated: 27 Aug 2026 | Deadline: 31 Aug 2026 (hard, no extension) | 4 days left**
 
 ## Status: every mechanic promised on the design form is now implemented. What's left is verification, art, and packaging.
 
@@ -23,7 +23,7 @@ build disagree with the document the instructor is marking against.
 | Win: reach school in time **with a life left** | `GameManager.WinGame()` asserts `Lives > 0` | done |
 | Lose: lives run out **or** timer hits zero | `LoseGame("lives")` / `LoseGame("time")`, different screens | done |
 | 8-bit pixel art, chiptune | Bun — placeholder colours in place, import settings documented | Bun |
-| Optional: bell timer countdown | 70s countdown + "THE BELL RANG" lose screen | done |
+| Optional: bell timer countdown | 85s countdown + "THE BELL RANG" lose screen | done |
 | Optional: death counter | `DeathCounterUI`, also on the result screen | done |
 | Optional: bicycle power-up | `BicyclePickup.cs`, +45% speed for 4.5s, 2 placed | done |
 | Optional: sound effects & chiptune BGM | not started | cuttable |
@@ -60,7 +60,7 @@ Form says Optional Features "more than one" — three are shipped, so this is al
 - [x] **Player caught on platform edges instead of falling.** Collider had no PhysicsMaterial2D, so default friction 0.4 held it against vertical faces. `PlayerController.Awake` now assigns a zero-friction material. No ice-skating, because horizontal velocity is assigned outright every FixedUpdate.
 - [x] **moveSpeed 8 felt like a permanent sprint.** Down to 6 (the original), sprint 11.5 → 8.5. Shorter jump reach as a result, so `Ground_11_Climb` was widened 6u → 7u to bring the last 4u gap down to 3u, and the timer went 70 → 85.
 
-## Next (26 Aug) — in order
+## Next (27 Aug) — in order
 - [ ] **Open `Level1.unity` in Unity and press Play.** All scene YAML and the new prefabs were generated outside the editor and have never been opened in Unity. Confirm it loads clean with no console errors before anything else stacks on top. **THIS IS THE GATE.**
 - [ ] Play it end-to-end and confirm each of these by hand:
       - [ ] Shift sprints and the stamina bar drains, then locks until released
@@ -76,7 +76,7 @@ Form says Optional Features "more than one" — three are shipped, so this is al
       - [ ] Spikes rise with enough warning to react at walking speed
       - [ ] Bicycle noticeably speeds you up and the HUD timer counts down
 - [ ] If 3 lives makes the level unwinnable for a first-timer, raise `startingLives` on the `GameManager` object to 5. One field, no code change.
-- [ ] `git add .` / `git commit -m "Troll traps, lives, score, sprint, pause — matches the design form"` / `git push` (run each line separately in PowerShell, not chained with `&&`)
+- [x] Committed and pushed — `ec3025b` is on `origin/main`, 38 files, +5697 lines.
 - [ ] Tell Krin to read the "กฎการวางกับดัก troll" section in `HANDOFF.md` before placing anything. Tell Bun the import settings: Sprite (2D and UI), **Filter Mode = Point**, **Compression = None**, identical Pixels Per Unit, dropped on the **prefabs** not the scene — and that `PlatformFake` must use the exact same sprite as `Ground`.
 
 ## Day-by-day from here
