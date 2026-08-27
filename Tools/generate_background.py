@@ -1,158 +1,144 @@
 #!/usr/bin/env python3
 """
 Generates 8-bit pixel art background for KOSEN KMITL campus.
-Theme: 'Late to KOSEN' - Morning rush from dorms toward KOSEN KMITL campus buildings.
+Widescreen (800x450), softer pastel tones to avoid visual clutter with gameplay elements.
 """
 
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 def hex_to_rgba(h, a=255):
     h = h.lstrip('#')
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), a)
 
-W, H = 640, 360
+W, H = 800, 450
 img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
 draw = ImageDraw.Draw(img)
 
-# --- 1. Morning Sky Gradient ---
-# Sky colors from top (deep morning blue) to horizon (warm golden peach)
-sky_top = hex_to_rgba('4a88e8')
-sky_mid = hex_to_rgba('8ec5fc')
-sky_horizon = hex_to_rgba('fed7aa')
-sun_glow = hex_to_rgba('ffedd5')
+# --- 1. Soft Morning Sky Gradient ---
+sky_top = hex_to_rgba('6ba3eb')
+sky_mid = hex_to_rgba('a8d4ff')
+sky_horizon = hex_to_rgba('ffedd5')
 
 for y in range(H):
-    t = y / (H * 0.75)
+    t = y / (H * 0.78)
     if t < 0.5:
-        # top to mid
         factor = t / 0.5
         r = int(sky_top[0] + (sky_mid[0] - sky_top[0]) * factor)
         g = int(sky_top[1] + (sky_mid[1] - sky_top[1]) * factor)
         b = int(sky_top[2] + (sky_mid[2] - sky_top[2]) * factor)
     else:
-        # mid to horizon
         factor = min(1.0, (t - 0.5) / 0.5)
         r = int(sky_mid[0] + (sky_horizon[0] - sky_mid[0]) * factor)
         g = int(sky_mid[1] + (sky_horizon[1] - sky_mid[1]) * factor)
         b = int(sky_mid[2] + (sky_horizon[2] - sky_mid[2]) * factor)
     draw.line([(0, y), (W, y)], fill=(r, g, b, 255))
 
-# Morning Sun
-sun_center = (520, 80)
-sun_r = 36
-for r in range(sun_r + 20, 0, -2):
-    alpha = int(120 * (1 - (r / (sun_r + 20))))
+# Soft Morning Sun
+sun_center = (650, 100)
+sun_r = 45
+for r in range(sun_r + 30, 0, -3):
+    alpha = int(90 * (1 - (r / (sun_r + 30))))
     draw.ellipse([sun_center[0] - r, sun_center[1] - r, sun_center[0] + r, sun_center[1] + r],
-                 fill=(255, 240, 200, alpha))
+                 fill=(255, 245, 210, alpha))
 draw.ellipse([sun_center[0] - sun_r, sun_center[1] - sun_r, sun_center[0] + sun_r, sun_center[1] + sun_r],
-             fill=(255, 255, 230, 255))
+             fill=(255, 255, 235, 230))
 
 # --- 2. Fluffy 8-Bit Clouds ---
 def draw_pixel_cloud(cx, cy, scale=1.0):
-    cloud_col = hex_to_rgba('ffffff', 230)
-    shadow_col = hex_to_rgba('e2e8f0', 210)
+    cloud_col = hex_to_rgba('ffffff', 220)
+    shadow_col = hex_to_rgba('e2e8f0', 180)
     bubbles = [
-        (0, 0, int(35 * scale), int(20 * scale)),
-        (int(-20 * scale), int(5 * scale), int(25 * scale), int(15 * scale)),
-        (int(22 * scale), int(6 * scale), int(28 * scale), int(15 * scale)),
-        (int(-35 * scale), int(10 * scale), int(20 * scale), int(12 * scale)),
-        (int(40 * scale), int(10 * scale), int(22 * scale), int(12 * scale)),
+        (0, 0, int(45 * scale), int(25 * scale)),
+        (int(-28 * scale), int(6 * scale), int(32 * scale), int(18 * scale)),
+        (int(30 * scale), int(7 * scale), int(35 * scale), int(18 * scale)),
+        (int(-48 * scale), int(12 * scale), int(25 * scale), int(15 * scale)),
+        (int(52 * scale), int(12 * scale), int(28 * scale), int(15 * scale)),
     ]
-    # Shadow underneath
     for bx, by, bw, bh in bubbles:
-        draw.ellipse([cx + bx - bw, cy + by - bh + 4, cx + bx + bw, cy + by + bh + 4], fill=shadow_col)
-    # Highlight
+        draw.ellipse([cx + bx - bw, cy + by - bh + 5, cx + bx + bw, cy + by + bh + 5], fill=shadow_col)
     for bx, by, bw, bh in bubbles:
         draw.ellipse([cx + bx - bw, cy + by - bh, cx + bx + bw, cy + by + bh], fill=cloud_col)
 
-draw_pixel_cloud(90, 70, 0.9)
-draw_pixel_cloud(280, 50, 1.2)
-draw_pixel_cloud(440, 95, 0.7)
-draw_pixel_cloud(590, 60, 0.8)
+draw_pixel_cloud(110, 80, 0.9)
+draw_pixel_cloud(340, 60, 1.3)
+draw_pixel_cloud(560, 110, 0.8)
+draw_pixel_cloud(740, 75, 0.9)
 
-# --- 3. Distant KMITL & Lat Krabang Skyline (Silhouettes) ---
-dist_col = hex_to_rgba('94a3b8', 190)
-dist_win = hex_to_rgba('fef08a', 140)
+# --- 3. Distant KMITL & Lat Krabang Skyline ---
+dist_col = hex_to_rgba('a0aec0', 170)
+dist_win = hex_to_rgba('fef9c3', 130)
 
 distant_buildings = [
-    (20, 160, 45, 120),
-    (70, 140, 55, 140),
-    (130, 180, 40, 100),
-    (175, 150, 60, 130),
-    (240, 130, 70, 150),
-    (315, 170, 50, 110),
-    (370, 145, 55, 135),
-    (430, 135, 65, 145),
-    (500, 160, 45, 120),
-    (550, 140, 70, 140),
+    (15, 200, 60, 150),
+    (80, 175, 70, 175),
+    (155, 220, 50, 130),
+    (210, 190, 75, 160),
+    (290, 165, 85, 185),
+    (385, 210, 65, 140),
+    (460, 180, 70, 170),
+    (540, 170, 80, 180),
+    (630, 200, 60, 150),
+    (700, 175, 85, 175),
 ]
 for x, y, w, h in distant_buildings:
     draw.rectangle([x, y, x + w, y + h], fill=dist_col)
-    # Tiny distant windows
-    for wy in range(y + 10, y + h - 10, 14):
-        for wx in range(x + 6, x + w - 6, 10):
-            draw.rectangle([wx, wy, wx + 4, wy + 6], fill=dist_win)
+    for wy in range(y + 12, y + h - 12, 16):
+        for wx in range(x + 8, x + w - 8, 12):
+            draw.rectangle([wx, wy, wx + 5, wy + 7], fill=dist_win)
 
-# Distant Communication / Transmission Tower (สจล. เสาสื่อสารโทรคมนาคม)
-tw_x = 275
-draw.line([(tw_x, 80), (tw_x - 15, 130)], fill=dist_col, width=2)
-draw.line([(tw_x, 80), (tw_x + 15, 130)], fill=dist_col, width=2)
-draw.line([(tw_x - 15, 130), (tw_x + 15, 130)], fill=dist_col, width=2)
-draw.line([(tw_x - 8, 105), (tw_x + 8, 105)], fill=dist_col, width=2)
-draw.line([(tw_x, 70), (tw_x, 80)], fill=hex_to_rgba('ef4444'), width=2) # Red beacon
+# Distant Communication Tower (KMITL Beacon)
+tw_x = 345
+draw.line([(tw_x, 100), (tw_x - 18, 165)], fill=dist_col, width=2)
+draw.line([(tw_x, 100), (tw_x + 18, 165)], fill=dist_col, width=2)
+draw.line([(tw_x - 18, 165), (tw_x + 18, 165)], fill=dist_col, width=2)
+draw.line([(tw_x - 10, 135), (tw_x + 10, 135)], fill=dist_col, width=2)
+draw.line([(tw_x, 88), (tw_x, 100)], fill=hex_to_rgba('f87171'), width=2)
 
 # --- 4. Main Midground: KOSEN-KMITL Academic Buildings ---
-wall_white = hex_to_rgba('f8fafc')
-wall_shade = hex_to_rgba('cbd5e1')
-wall_dark  = hex_to_rgba('94a3b8')
-accent_kosen_orange = hex_to_rgba('ea580c') # KMITL / KOSEN Orange
-accent_blue = hex_to_rgba('1e40af')
-glass_blue  = hex_to_rgba('67e8f9')
-glass_refl  = hex_to_rgba('cffafe')
-roof_slate  = hex_to_rgba('334155')
+wall_white = hex_to_rgba('f1f5f9', 240)
+wall_shade = hex_to_rgba('cbd5e1', 240)
+accent_kosen_orange = hex_to_rgba('fb923c', 240) # Softer KMITL Orange
+glass_blue  = hex_to_rgba('7dd3fc', 220)
+glass_refl  = hex_to_rgba('e0f2fe', 220)
+roof_slate  = hex_to_rgba('475569', 240)
 
-# KOSEN Complex Left Wing (Dorm / Lab Building)
-draw.rectangle([10, 190, 160, 310], fill=wall_white)
-draw.rectangle([10, 185, 160, 190], fill=roof_slate)
-draw.rectangle([10, 245, 160, 252], fill=accent_kosen_orange)
-# Windows on Left Wing
+# Left Wing (Laboratories)
+draw.rectangle([20, 240, 200, 390], fill=wall_white)
+draw.rectangle([20, 233, 200, 240], fill=roof_slate)
+draw.rectangle([20, 305, 200, 314], fill=accent_kosen_orange)
 for r in range(4):
-    for c in range(6):
-        wx = 20 + c * 22
-        wy = 198 + r * 26
-        if wy < 245 or wy > 255:
-            draw.rectangle([wx, wy, wx + 14, wy + 16], fill=glass_blue)
-            draw.line([(wx, wy + 16), (wx + 14, wy)], fill=glass_refl, width=1)
+    for c in range(7):
+        wx = 32 + c * 24
+        wy = 250 + r * 32
+        if wy < 305 or wy > 318:
+            draw.rectangle([wx, wy, wx + 16, wy + 20], fill=glass_blue)
+            draw.line([(wx, wy + 20), (wx + 16, wy)], fill=glass_refl, width=1)
 
-# Center-Right Main Complex: KOSEN KMITL Engineering Building
-draw.rectangle([180, 160, 480, 320], fill=wall_white)
-draw.rectangle([180, 153, 480, 160], fill=roof_slate)
+# Center Main Complex (KOSEN Building)
+draw.rectangle([225, 200, 580, 400], fill=wall_white)
+draw.rectangle([225, 192, 580, 200], fill=roof_slate)
 
-# Orange Accent Façade & Pillars (KOSEN Branding)
-draw.rectangle([180, 160, 210, 320], fill=wall_shade)
-draw.rectangle([210, 160, 230, 320], fill=accent_kosen_orange)
-draw.rectangle([430, 160, 450, 320], fill=accent_kosen_orange)
-draw.rectangle([450, 160, 480, 320], fill=wall_shade)
+# Orange Pillars
+draw.rectangle([225, 200, 260, 400], fill=wall_shade)
+draw.rectangle([260, 200, 285, 400], fill=accent_kosen_orange)
+draw.rectangle([520, 200, 545, 400], fill=accent_kosen_orange)
+draw.rectangle([545, 200, 580, 400], fill=wall_shade)
 
-# Central Clock Tower / Logo Section
-draw.rectangle([280, 130, 380, 320], fill=hex_to_rgba('f1f5f9'))
-draw.rectangle([280, 122, 380, 130], fill=accent_kosen_orange)
-# Clock
-clock_c = (330, 148)
-draw.ellipse([clock_c[0] - 12, clock_c[1] - 12, clock_c[0] + 12, clock_c[1] + 12], fill=hex_to_rgba('ffffff'), outline=roof_slate, width=2)
-# Clock hands pointing to 8:25 (Almost late!)
-draw.line([clock_c, (clock_c[0] + 6, clock_c[1] + 3)], fill=roof_slate, width=2)
-draw.line([clock_c, (clock_c[0] - 4, clock_c[1] - 8)], fill=hex_to_rgba('dc2626'), width=2)
+# Clock Tower
+draw.rectangle([345, 160, 460, 400], fill=hex_to_rgba('e2e8f0', 240))
+draw.rectangle([345, 150, 460, 160], fill=accent_kosen_orange)
+clock_c = (402, 178)
+draw.ellipse([clock_c[0] - 15, clock_c[1] - 15, clock_c[0] + 15, clock_c[1] + 15], fill=hex_to_rgba('ffffff'), outline=roof_slate, width=2)
+draw.line([clock_c, (clock_c[0] + 7, clock_c[1] + 4)], fill=roof_slate, width=2)
+draw.line([clock_c, (clock_c[0] - 5, clock_c[1] - 10)], fill=hex_to_rgba('ef4444'), width=2)
 
-# Large "KOSEN" Pixel Lettering Signboard
-sign_bg = hex_to_rgba('1e293b')
-draw.rectangle([250, 175, 410, 198], fill=sign_bg)
-draw.rectangle([248, 173, 412, 175], fill=accent_kosen_orange)
-draw.rectangle([248, 198, 412, 200], fill=accent_kosen_orange)
+# Signboard: KOSEN - KMITL
+sign_bg = hex_to_rgba('334155', 240)
+draw.rectangle([310, 218, 495, 246], fill=sign_bg)
+draw.rectangle([308, 215, 497, 218], fill=accent_kosen_orange)
+draw.rectangle([308, 246, 497, 249], fill=accent_kosen_orange)
 
-# Draw Pixel Text "KOSEN - KMITL"
-# Simple pixel font rendering for "K O S E N   K M I T L"
 def draw_pixel_letter(char, start_x, start_y, color):
     font_map = {
         'K': ["#  #", "##  ", "# # ", "#  #", "#  #"],
@@ -173,80 +159,76 @@ def draw_pixel_letter(char, start_x, start_y, color):
                 draw.rectangle([start_x + c * 2, start_y + r * 2, start_x + c * 2 + 1, start_y + r * 2 + 1], fill=color)
 
 title_text = "KOSEN-KMITL"
-px = 260
-py = 182
+px = 325
+py = 227
 text_col = hex_to_rgba('ffffff')
 for ch in title_text:
     draw_pixel_letter(ch, px, py, text_col if ch != '-' else accent_kosen_orange)
-    px += 13 if ch not in ('I', 'T', '-') else 9
+    px += 15 if ch not in ('I', 'T', '-') else 11
 
-# Engineering Laboratory Glass Grid Façade
+# Glass grid façade
 for r in range(4):
-    for c in range(10):
-        gx = 236 + c * 19
-        gy = 208 + r * 24
-        if not (280 <= gx <= 370 and r == 0):
-            draw.rectangle([gx, gy, gx + 15, gy + 18], fill=glass_blue)
-            draw.line([(gx, gy + 18), (gx + 15, gy)], fill=glass_refl, width=1)
-            draw.rectangle([gx, gy, gx + 15, gy + 18], outline=wall_shade, width=1)
+    for c in range(12):
+        gx = 295 + c * 23
+        gy = 258 + r * 30
+        if not (345 <= gx <= 445 and r == 0):
+            draw.rectangle([gx, gy, gx + 18, gy + 22], fill=glass_blue)
+            draw.line([(gx, gy + 22), (gx + 18, gy)], fill=glass_refl, width=1)
+            draw.rectangle([gx, gy, gx + 18, gy + 22], outline=wall_shade, width=1)
 
-# Main Entrance Glass Doors (KOSEN Hall)
-draw.rectangle([295, 275, 365, 320], fill=hex_to_rgba('0f172a'))
-draw.rectangle([300, 280, 328, 320], fill=glass_blue, outline=wall_white, width=1)
-draw.rectangle([332, 280, 360, 320], fill=glass_blue, outline=wall_white, width=1)
+# Main Entrance Glass Doors
+draw.rectangle([365, 345, 440, 400], fill=hex_to_rgba('1e293b'))
+draw.rectangle([370, 350, 400, 400], fill=glass_blue, outline=wall_white, width=1)
+draw.rectangle([405, 350, 435, 400], fill=glass_blue, outline=wall_white, width=1)
 
-# Right Wing (Research Wing)
-draw.rectangle([500, 180, 630, 310], fill=wall_white)
-draw.rectangle([500, 175, 630, 180], fill=roof_slate)
-draw.rectangle([500, 235, 630, 242], fill=accent_kosen_orange)
+# Right Wing
+draw.rectangle([600, 230, 780, 390], fill=wall_white)
+draw.rectangle([600, 223, 780, 230], fill=roof_slate)
+draw.rectangle([600, 295, 780, 304], fill=accent_kosen_orange)
 for r in range(4):
-    for c in range(5):
-        wx = 510 + c * 22
-        wy = 188 + r * 26
-        if wy < 235 or wy > 245:
-            draw.rectangle([wx, wy, wx + 14, wy + 16], fill=glass_blue)
-            draw.line([(wx, wy + 16), (wx + 14, wy)], fill=glass_refl, width=1)
+    for c in range(6):
+        wx = 612 + c * 25
+        wy = 240 + r * 32
+        if wy < 295 or wy > 308:
+            draw.rectangle([wx, wy, wx + 17, wy + 20], fill=glass_blue)
+            draw.line([(wx, wy + 20), (wx + 17, wy)], fill=glass_refl, width=1)
 
-# --- 5. Foreground Campus Greenery, Trees & Lamp Posts ---
-tree_dark  = hex_to_rgba('14532d')
-tree_mid   = hex_to_rgba('16a34a')
-tree_light = hex_to_rgba('4ade80')
-trunk_col  = hex_to_rgba('78350f')
+# --- 5. Campus Trees & Greenery ---
+tree_dark  = hex_to_rgba('15803d', 220)
+tree_mid   = hex_to_rgba('22c55e', 220)
+tree_light = hex_to_rgba('86efac', 220)
+trunk_col  = hex_to_rgba('854d0e', 220)
 
 def draw_pixel_tree(tx, ty, scale=1.0):
-    tw = int(24 * scale)
-    th = int(45 * scale)
-    # Trunk
-    draw.rectangle([tx - int(3 * scale), ty, tx + int(3 * scale), ty + th], fill=trunk_col)
-    # Leaves clusters
-    draw.ellipse([tx - tw, ty - th + 5, tx + tw, ty + 10], fill=tree_dark)
-    draw.ellipse([tx - tw + 3, ty - th + 2, tx + tw - 3, ty + 5], fill=tree_mid)
+    tw = int(30 * scale)
+    th = int(55 * scale)
+    draw.rectangle([tx - int(4 * scale), ty, tx + int(4 * scale), ty + th], fill=trunk_col)
+    draw.ellipse([tx - tw, ty - th + 6, tx + tw, ty + 12], fill=tree_dark)
+    draw.ellipse([tx - tw + 4, ty - th + 3, tx + tw - 4, ty + 6], fill=tree_mid)
     draw.ellipse([tx - int(tw * 0.6), ty - th, tx + int(tw * 0.4), ty - int(th * 0.4)], fill=tree_light)
 
-# Trees along the walkway
-draw_pixel_tree(170, 260, 1.1)
-draw_pixel_tree(490, 260, 1.2)
-draw_pixel_tree(5, 270, 0.9)
-draw_pixel_tree(635, 270, 0.9)
+draw_pixel_tree(210, 325, 1.1)
+draw_pixel_tree(590, 325, 1.2)
+draw_pixel_tree(10, 335, 0.9)
+draw_pixel_tree(790, 335, 0.9)
 
-# Campus Modern Streetlamp
+# Campus Streetlamps
 def draw_lamp(lx, ly):
-    lamp_col = hex_to_rgba('334155')
-    light_glow = hex_to_rgba('fef08a', 200)
-    draw.rectangle([lx, ly, lx + 2, ly + 65], fill=lamp_col)
-    draw.rectangle([lx - 6, ly, lx + 8, ly + 3], fill=lamp_col)
-    draw.rectangle([lx - 4, ly + 3, lx + 6, ly + 7], fill=light_glow)
+    lamp_col = hex_to_rgba('475569')
+    light_glow = hex_to_rgba('fef08a', 180)
+    draw.rectangle([lx, ly, lx + 3, ly + 80], fill=lamp_col)
+    draw.rectangle([lx - 8, ly, lx + 11, ly + 4], fill=lamp_col)
+    draw.rectangle([lx - 5, ly + 4, lx + 8, ly + 9], fill=light_glow)
 
-draw_lamp(150, 245)
-draw_lamp(470, 245)
+draw_lamp(190, 305)
+draw_lamp(565, 305)
 
-# --- 6. Campus Pathway / Green lawn at base ---
-draw.rectangle([0, 310, W, H], fill=hex_to_rgba('15803d')) # Lawn
-draw.rectangle([0, 320, W, H], fill=hex_to_rgba('166534'))
-draw.rectangle([0, 335, W, H], fill=hex_to_rgba('475569')) # Pavement
-draw.rectangle([0, 340, W, H], fill=hex_to_rgba('334155'))
+# --- 6. Lawn & Ground at base ---
+draw.rectangle([0, 390, W, H], fill=hex_to_rgba('16a34a', 220))
+draw.rectangle([0, 405, W, H], fill=hex_to_rgba('15803d', 220))
+draw.rectangle([0, 420, W, H], fill=hex_to_rgba('64748b', 220))
+draw.rectangle([0, 430, W, H], fill=hex_to_rgba('475569', 220))
 
-# Save Output
 out_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'Assets', 'Art', 'Sprites', 'background_kosen.png')
 img.save(out_path)
-print(f'Generated KOSEN KMITL background: {out_path} ({W}x{H})')
+print(f'Generated soft widescreen KOSEN background: {out_path} ({W}x{H})')
