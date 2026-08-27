@@ -13,7 +13,7 @@ using TMPro;
 // import a Thai TTF as a TMP Font Asset first, then swap the strings below.
 public class ResultUI : MonoBehaviour
 {
-    private const string RestartHint = "Press R to try again";
+    private const string RestartHint = "Press R to try again    |    Press Q to quit";
 
     private static ResultUI instance;
 
@@ -117,6 +117,10 @@ public class ResultUI : MonoBehaviour
         {
             gm.RestartLevel();
         }
+        else if (Input.GetKeyDown(KeyCode.Q))
+        {
+            gm.QuitGame();
+        }
     }
 
     private void Show(GameManager gm)
@@ -135,7 +139,7 @@ public class ResultUI : MonoBehaviour
             headline.text = "OUT OF LIVES";
             headline.color = new Color(1f, 0.45f, 0.45f);
             detail.text =
-                $"The traps got you three times. You're not going anywhere.\n" +
+                $"The traps got you {gm.DeathCount} times. You're not going anywhere.\n" +
                 $"Traps survived: {gm.TrapsSurvived}/{gm.TrapTotal}\n" +
                 $"SCORE  {gm.Score}\n\n{RestartHint}";
         }

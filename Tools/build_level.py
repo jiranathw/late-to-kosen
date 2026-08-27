@@ -6,9 +6,9 @@ Writes real Unity PrefabInstance blocks (not plain GameObjects) so that when Bun
 drops artwork onto the Trap/Ground/Checkpoint/Goal prefabs, every placed copy in
 the level updates automatically.
 
-Player physics (from PlayerController on Level1): moveSpeed 8, jumpForce 13,
-gravityScale 3, fallMultiplier 1.5 -> apex 2.87u, max flat gap 6.42u. Layout
-below keeps every gap <= 4u and every step-up <= 1.5u, i.e. inside 62% of
+Player physics (from PlayerController on Level1): moveSpeed 6, jumpForce 13,
+gravityScale 3, fallMultiplier 1.5 -> apex 2.87u, max flat gap 4.81u. Layout
+below keeps every gap <= 3u and every step-up <= 1.5u, i.e. inside 73% of
 maximum reach even on the tightest rising jump.
 """
 
@@ -32,13 +32,15 @@ PREFABS = {
 }
 
 # ---------------------------------------------------------------- level design
-# Physics after the tuning pass: moveSpeed 8, jumpForce 13, gravityScale 3,
+# Physics after the tuning pass: moveSpeed 6, jumpForce 13, gravityScale 3,
 # fallMultiplier 1.5.  Rise g = 3*9.81 = 29.43 -> apex 2.871u, t_rise 0.4418s.
 # Fall g = 3*1.5*9.81 = 44.145 -> falling is faster than rising, so horizontal
-# reach is SHORTER than the naive symmetric estimate.  Worked out below:
-#   flat gap  6.42u | +1.0u step 5.86u | +1.5u step 5.53u
-# Every gap here is <= 4u, i.e. under 62% of the tightest reach.  That headroom
-# is deliberate: it has to be clearable by a first-time player on a keyboard.
+# reach is SHORTER than the naive symmetric estimate.  Worked out at walk speed:
+#   flat gap  4.81u | +1.0u step 4.40u | +1.5u step 4.15u
+# Every gap here is <= 3u, i.e. under 73% of the tightest reach (the +1.5u step
+# ups at Ground_09/10/11).  That headroom is deliberate: it has to be clearable
+# by a first-time player on a keyboard.  Sprint (Shift, 8.5u/s) stretches flat
+# reach to 6.82u, so nothing in the level is tight when running.
 
 # Ground: (name, x_center, y_center, width, height). Top surface = y + height/2.
 GROUNDS = [
@@ -59,7 +61,7 @@ GROUNDS = [
     ("Ground_11_Climb",   133.5,  6.0,   7.0, 1.0),  # top 6.5   spans 130 .. 137  gap 3, up 1.5
                                                      # widened by 1u so the last jump is 3u not 4u,
                                                      # because moveSpeed came down 8 -> 6
-    ("Ground_12_School",  148.0,  6.0,  16.0, 1.0),  # top 6.5   spans 140 .. 156  gap 4
+    ("Ground_12_School",  148.0,  6.0,  16.0, 1.0),  # top 6.5   spans 140 .. 156  gap 3
 ]
 
 # Trap: (name, x, ground_top). Trap prefab is scale 0.5 -> 0.5u box, so it sits
@@ -146,11 +148,12 @@ GOAL = ("Goal_SchoolGate", 152.0, 8.0, 2.0, 3.0)
 #
 # WHY each one:
 #   gravityScale 1 -> 3      jumpForce 7 -> 13    the tutorial defaults are floaty
-#   moveSpeed 6 -> 8         you cannot finish the level in time at 6
+#   moveSpeed 8 -> 6         8 read as a sprint even when walking; Shift now
+#                            covers the fast case (sprintSpeed 8.5)
 #   m_Interpolate 0 -> 1     kills the camera judder at 3x gravity
 #   killY -20 -> -12         respawn sooner after falling off; -20 is a long wait
 #   sorting order 0 -> 10    player must never render behind Bun's ground art
-#   startingTime 90 -> 70    at 90 the countdown never mattered
+#   startingTime 90 -> 85    at 90 the countdown never mattered
 #   UiScaleMode 0 -> 1       constant-pixel UI explodes at other resolutions
 SCENE_VALUES = [
     (1645035013, "m_UiScaleMode: 0",                  "m_UiScaleMode: 1"),

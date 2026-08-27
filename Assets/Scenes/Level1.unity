@@ -288,6 +288,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   startingTime: 85
+  startingLives: 3
+  pointsPerSecondLeft: 10
+  pointsPerTrapSurvived: 100
+  penaltyPerDeath: 50
   defaultSpawnPoint: {fileID: 1497045125}
 --- !u!4 &598578338
 Transform:
@@ -337,7 +341,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   moveSpeed: 6
+  sprintSpeed: 8.5
+  maxStamina: 2.5
+  staminaRegen: 0.6
+  bikeMultiplier: 1.45
   jumpForce: 13
+  coyoteTime: 0.12
+  jumpBufferTime: 0.12
+  fallMultiplier: 1.5
+  lowJumpMultiplier: 2.5
   groundCheck: {fileID: 586544842}
   groundCheckRadius: 0.13
   groundLayer:
