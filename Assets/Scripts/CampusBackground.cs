@@ -22,7 +22,7 @@ public class CampusBackground : MonoBehaviour
         {
             bgObj = new GameObject("KosenBackground");
             bgObj.transform.SetParent(cam.transform);
-            bgObj.transform.localPosition = new Vector3(0f, 0f, 10f);
+            bgObj.transform.localPosition = new Vector3(0f, 3.5f, 10f);
             bgObj.transform.localRotation = Quaternion.identity;
         }
 

@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // Cycles through 8-bit sprite frames for the KOSEN student based on movement.
-// Left/Right orientation is handled automatically via PlayerController's localScale flip.
+// Handles walking/running foot-stepping animation and air/jump pose.
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(PlayerController))]
 public class PlayerAnimator : MonoBehaviour
@@ -12,8 +12,8 @@ public class PlayerAnimator : MonoBehaviour
     [SerializeField] private Sprite jumpSprite;
 
     [Header("Frame Rate")]
-    [SerializeField] private float walkFps = 8f;
-    [SerializeField] private float sprintFps = 13f;
+    [SerializeField] private float walkFps = 9f;
+    [SerializeField] private float sprintFps = 14f;
 
     private SpriteRenderer sr;
     private Rigidbody2D rb;
@@ -27,13 +27,34 @@ public class PlayerAnimator : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         controller = GetComponent<PlayerController>();
 
-        // Ensure white tint so 8-bit sprite colors display accurately
         if (sr != null)
         {
             sr.color = Color.white;
         }
 
-        // Auto-discover sprites if not assigned in Inspector
+        LoadSprites();
+    }
+
+    private void LoadSprites()
+    {
+        // 1. Try loading from Resources/Sprites/
+        if (idleSprite == null) idleSprite = Resources.Load<Sprite>("Sprites/player_idle");
+        if (jumpSprite == null) jumpSprite = Resources.Load<Sprite>("Sprites/player_jump");
+
+        if (runSprites == null || runSprites.Length == 0 || runSprites[0] == null)
+        {
+            Sprite r1 = Resources.Load<Sprite>("Sprites/player_run_1");
+            Sprite r2 = Resources.Load<Sprite>("Sprites/player_run_2");
+            Sprite r3 = Resources.Load<Sprite>("Sprites/player_run_3");
+            Sprite r4 = Resources.Load<Sprite>("Sprites/player_run_4");
+
+            if (r1 != null && r2 != null && r3 != null && r4 != null)
+            {
+                runSprites = new Sprite[] { r1, r2, r3, r4 };
+            }
+        }
+
+        // 2. Fallback: Search all loaded sprites by name
         if (idleSprite == null || runSprites == null || runSprites.Length == 0)
         {
             Sprite[] all = Resources.FindObjectsOfTypeAll<Sprite>();
@@ -41,34 +62,41 @@ public class PlayerAnimator : MonoBehaviour
             foreach (var s in all)
             {
                 if (s == null) continue;
-                if (s.name == "player_idle") idleSprite = s;
+                if (s.name == "player_idle" && idleSprite == null) idleSprite = s;
                 else if (s.name == "player_run_1") r1 = s;
                 else if (s.name == "player_run_2") r2 = s;
                 else if (s.name == "player_run_3") r3 = s;
                 else if (s.name == "player_run_4") r4 = s;
-                else if (s.name == "player_jump") jumpSprite = s;
+                else if (s.name == "player_jump" && jumpSprite == null) jumpSprite = s;
             }
             if (r1 != null && r2 != null && r3 != null && r4 != null)
             {
                 runSprites = new Sprite[] { r1, r2, r3, r4 };
             }
         }
+
+        if (sr != null && idleSprite != null && sr.sprite == null)
+        {
+            sr.sprite = idleSprite;
+        }
     }
 
-    private void LateUpdate()
+    private void Update()
     {
         if (sr == null) return;
 
         // In air / jumping
-        if (rb != null && Mathf.Abs(rb.linearVelocity.y) > 0.4f)
+        if (rb != null && Mathf.Abs(rb.linearVelocity.y) > 0.35f)
         {
             if (jumpSprite != null) sr.sprite = jumpSprite;
             return;
         }
 
         // Running / Walking state
-        float xVel = rb != null ? Mathf.Abs(rb.linearVelocity.x) : 0f;
-        if (xVel > 0.15f && runSprites != null && runSprites.Length > 0)
+        float inputX = Input.GetAxisRaw("Horizontal");
+        float velX = rb != null ? Mathf.Abs(rb.linearVelocity.x) : 0f;
+
+        if ((Mathf.Abs(inputX) > 0.05f || velX > 0.1f) && runSprites != null && runSprites.Length > 0)
         {
             float fps = (controller != null && controller.IsSprinting) ? sprintFps : walkFps;
             animTimer += Time.deltaTime;
