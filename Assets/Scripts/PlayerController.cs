@@ -57,6 +57,11 @@ public class PlayerController : MonoBehaviour
         baseGravityScale = rb.gravityScale;
         stamina = maxStamina;
 
+        if (GetComponent<PlayerAnimator>() == null)
+        {
+            gameObject.AddComponent<PlayerAnimator>();
+        }
+
         // Zero friction, or the player catches on the vertical face of a
         // platform when falling into a gap and hangs there instead of dropping.
         // Costs nothing: horizontal velocity is assigned outright every
