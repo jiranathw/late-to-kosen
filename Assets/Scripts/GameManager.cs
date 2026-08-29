@@ -4,13 +4,29 @@ using UnityEngine.SceneManagement;
 
 // Attach this to one empty GameObject named "GameManager" in the scene.
 // Everything else (player, traps, UI) talks to this through GameManager.Instance.
+//
+// SCOPE: this object is per-STAGE. It is destroyed and rebuilt every time a
+// scene loads, which is exactly why lives, the timer and the checkpoint live
+// here - all three are supposed to reset when you enter a new stage. Anything
+// that has to survive a scene load belongs in GameSession instead.
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    [Header("Stage")]
+    [Tooltip("1 or 2. Must match the scene: Level1 -> 1, Level2 -> 2.")]
+    [SerializeField] private int levelIndex = 1;
+
+    public int LevelIndex => Mathf.Clamp(levelIndex, 1, GameSession.LevelCount);
+    public string LevelTitle => GameSession.TitleFor(LevelIndex);
+    public string LevelSubtitle => GameSession.SubtitleFor(LevelIndex);
+    public bool IsFinalLevel => GameSession.IsFinalLevel(LevelIndex);
+
     [Header("Timer Settings")]
     [SerializeField] private float startingTime = 85f; // seconds before the bell rings
     public float TimeRemaining { get; private set; }
+    public float StartingTime => startingTime;
+    public float TimeUsed => Mathf.Max(0f, startingTime - TimeRemaining);
 
     [Header("Lives")]
     [SerializeField] private int startingLives = 3;
@@ -144,6 +160,38 @@ public class GameManager : MonoBehaviour
         Time.timeScale = paused ? 0f : 1f;
     }
 
+    // --- timer --------------------------------------------------------------
+
+    // Burn seconds off the clock. Used by trolls whose punishment is time
+    // rather than a life - FakeGoal is the only one right now. Routed through
+    // LoseGame like the normal countdown is, so "the bell rang" stays a
+    // single-entry code path no matter what took the last second.
+    public void SpendTime(float seconds)
+    {
+        if (IsGameOver || seconds <= 0f) return;
+
+        TimeRemaining -= seconds;
+        if (TimeRemaining <= 0f)
+        {
+            TimeRemaining = 0f;
+            LoseGame("time");
+        }
+    }
+
+    // --- respawn notification -----------------------------------------------
+
+    // Raised after the player has been put back at a checkpoint. Hazards that
+    // carry state across a death subscribe to this and undo themselves.
+    // RisingWater is the reason it exists: respawning at a checkpoint that is
+    // already nine metres underwater is not a level, it is a cutscene about
+    // drowning.
+    public event System.Action PlayerRespawned;
+
+    public void NotifyRespawned()
+    {
+        PlayerRespawned?.Invoke();
+    }
+
     // --- state transitions --------------------------------------------------
 
     public void SetCheckpoint(Vector3 position)
@@ -185,6 +233,8 @@ public class GameManager : MonoBehaviour
         IsGameOver = true;
         DidWin = true;
         Time.timeScale = 1f;
+
+        GameSession.Instance?.RecordClear(LevelIndex, Score, DeathCount, TimeUsed);
     }
 
     public void LoseGame(string reason)
@@ -195,8 +245,30 @@ public class GameManager : MonoBehaviour
         DidWin = false;
         LoseReason = reason;
         Time.timeScale = 1f;
+
+        // Banked now rather than on restart, because the player may quit from
+        // the result screen instead of retrying, and the deaths still happened.
+        GameSession.Instance?.RecordFailedAttempt(LevelIndex, DeathCount);
     }
 
+    // --- level flow ---------------------------------------------------------
+
+    // Stage cleared and there is another one. Called from the result screen.
+    public void NextLevel()
+    {
+        if (!IsGameOver || !DidWin || IsFinalLevel) return;
+
+        GameSession session = GameSession.Instance;
+        if (session == null)
+        {
+            Debug.LogError("No GameSession - cannot advance. Is GameSession.cs in Assets/Scripts?");
+            return;
+        }
+        session.LoadLevel(LevelIndex + 1);
+    }
+
+    // Retry the current stage only. Lives come back to full because the new
+    // scene builds a fresh GameManager; that is the whole point of the split.
     public void RestartLevel()
     {
         Time.timeScale = 1f;
@@ -214,6 +286,15 @@ public class GameManager : MonoBehaviour
             Debug.LogWarning($"Scene '{active.name}' is not in Build Settings. Add it before building!");
             SceneManager.LoadScene(active.name);
         }
+    }
+
+    // Wipe the run and go back to stage 1. Offered on the final results screen.
+    public void RestartRun()
+    {
+        Time.timeScale = 1f;
+        GameSession session = GameSession.Instance;
+        if (session != null) session.StartNewRun();
+        else RestartLevel();
     }
 
     public void QuitGame()

@@ -32,6 +32,11 @@ Thumbs.db
 # Unity crash logs
 sysinfo.txt
 *.stackdump
+editor_log.txt
+editor_log_prev.txt
 
-# Packages lock (keep this one tracked instead — only ignore if it causes issues)
-# /[Pp]ackages/packages-lock.json
+# Scene backups Unity dumps here after a crash — never commit these
+/Assets/_Recovery/
+/Assets/_Recovery.meta
+
+# Packages lock (keep this one tracked in

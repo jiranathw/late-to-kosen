@@ -1,52 +1,60 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-// Self-bootstraps or updates the KOSEN KMITL campus 8-bit background onto the Main Camera.
+// Self-bootstraps the KOSEN KMITL campus 8-bit background onto the Main Camera.
+//
+// RuntimeInitializeOnLoadMethod fires ONCE, at game start, not once per scene.
+// Every stage has its own camera, so a one-shot bootstrap would leave stages 2
+// and 3 on Unity's default grey-blue clear colour with no background sprite -
+// which reads as "the art is broken" rather than "the art is missing". Hooking
+// sceneLoaded costs one static event subscription and fixes it for every scene
+// that will ever be added.
+//
+// SIZING. background_kosen.png is 800x450 imported at 32 pixels per unit, so it
+// is 25 x 14.06 WORLD UNITS before any scaling - already bigger than the 17.8 x
+// 10 the camera can see at orthographicSize 5. The old code then scaled it a
+// further 1.25x and pushed it 3.5u up, which meant the player was looking at a
+// 1.75x zoom into the middle of one building: the KOSEN-KMITL banner filled a
+// third of the screen and read as squashed, because it was.
+//
+// So the scale is no longer a magic number. It is derived from the camera every
+// time the view changes, using a COVER fit - scale by whichever axis needs more,
+// so the image always fills the screen with no letterbox and no distortion. At
+// 16:9 the sprite and the view have the same aspect and the fit is exact.
 public class CampusBackground : MonoBehaviour
 {
+    // 8-bit art at full strength fights the player sprite and the traps for
+    // attention. Knocking it back leaves it as scenery, which is the job.
+    private const float Opacity = 0.45f;
+
+    private Camera cam;
+    private SpriteRenderer sr;
+    private int lastWidth;
+    private int lastHeight;
+    private float lastOrthoSize;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;   // never subscribe twice
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        Apply();
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Apply();
+    }
+
+    private static void Apply()
     {
         Camera cam = Camera.main;
         if (cam == null) return;
 
-        // Set camera clear color to soft morning sky blue
-        cam.backgroundColor = new Color(0.60f, 0.78f, 0.95f, 1f);
+        cam.backgroundColor = new Color(0.60f, 0.78f, 0.95f, 1f);   // morning sky
 
-        Transform bg = cam.transform.Find("KosenBackground");
+        Transform found = cam.transform.Find("KosenBackground");
         GameObject bgObj;
-        if (bg != null)
+        if (found != null)
         {
-            bgObj = bg.gameObject;
-        }
-        else
-        {
-            bgObj = new GameObject("KosenBackground");
-            bgObj.transform.SetParent(cam.transform);
-            bgObj.transform.localPosition = new Vector3(0f, 3.5f, 10f);
-            bgObj.transform.localRotation = Quaternion.identity;
-        }
-
-        // Scale up to cover widescreen and free aspect
-        bgObj.transform.localScale = new Vector3(1.25f, 1.25f, 1f);
-
-        SpriteRenderer sr = bgObj.GetComponent<SpriteRenderer>();
-        if (sr == null) sr = bgObj.AddComponent<SpriteRenderer>();
-
-        sr.sortingOrder = -100;
-        // Soft opacity (40%) so background stays subtle and doesn't clash with character
-        sr.color = new Color(1f, 1f, 1f, 0.40f);
-
-        if (sr.sprite == null)
-        {
-            Sprite[] all = Resources.FindObjectsOfTypeAll<Sprite>();
-            foreach (var s in all)
-            {
-                if (s != null && s.name == "background_kosen")
-                {
-                    sr.sprite = s;
-                    break;
-                }
-            }
-        }
-    }
-}
+            bgObj = found.gameObj
