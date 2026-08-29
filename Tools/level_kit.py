@@ -291,4 +291,37 @@ def chaser(name, x, top, chase, give_up, trigger=10.0, wind_up=0.6,
 
 
 def pot(name, x, y, trigger=3.4):
-    return Place("Flowerpot", name, (x, y), (0.7, 0.7, 1
+    return Place("Flowerpot", name, (x, y), (0.7, 0.7, 1),
+                 {"mb.triggerDistance": trigger})
+
+
+def boulder(name, x, y, w, h, trigger=4.0):
+    # A flowerpot the size of a car. Krin has one of these hanging over his
+    # arena with no script on it at all - it never falls, and the whole point
+    # is that you do not find that out until you have already run past it.
+    return Place("Flowerpot", name, (x, y), (w, h, 1),
+                 {"mb.triggerDistance": trigger})
+
+
+def lane(name, x, y, length, speed, every, delay, size, color):
+    return Place("TrafficLane", name, (x, y), (1, 1, 1),
+                 {"mb.laneLength": length, "mb.speed": speed,
+                  "mb.spawnEverySeconds": every, "mb.firstSpawnDelay": delay,
+                  "mb.vehicleSize.x": size[0], "mb.vehicleSize.y": size[1],
+                  "mb.vehicleColor.r": color[0], "mb.vehicleColor.g": color[1],
+                  "mb.vehicleColor.b": color[2], "mb.vehicleColor.a": 1,
+                  "mb.activationRange": length * 0.5 + 14})
+
+
+def water(name, x, y, size, rise, max_height, trigger_x):
+    return Place("Floodwater", name, (x, y), (1, 1, 1),
+                 {"mb.riseSpeed": rise, "mb.maxHeight": max_height,
+                  "mb.triggerAtPlayerX": trigger_x,
+                  "mb.surfaceSize.x": size[0], "mb.surfaceSize.y": size[1]})
+
+
+def teleporter(name, x, top, dest_x, dest_y, move_checkpoint=True):
+    return Place("Teleporter", name, (x, top + 1.5), (1.6, 3, 1),
+                 {"mb.destination.x": dest_x, "mb.destination.y": dest_y,
+                  "mb.moveCheckpointToExit": 1 if move_checkpoint else 0,
+                  "mb.oneShot": 1})

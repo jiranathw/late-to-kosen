@@ -98,7 +98,9 @@ public class PlayerAnimator : MonoBehaviour
 
         if ((Mathf.Abs(inputX) > 0.05f || velX > 0.1f) && runSprites != null && runSprites.Length > 0)
         {
-            float fps = (controller != null && controller.IsSprinting) ? sprintFps : walkFps;
+            // Riding is the only fast state left now that sprint is gone, so
+            // the fast frame rate follows the bike instead of the Shift key.
+            float fps = (controller != null && controller.IsRiding) ? sprintFps : walkFps;
             animTimer += Time.deltaTime;
             if (animTimer >= 1f / fps)
             {

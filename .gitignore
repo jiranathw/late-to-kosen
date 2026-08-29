@@ -39,4 +39,9 @@ editor_log_prev.txt
 /Assets/_Recovery/
 /Assets/_Recovery.meta
 
-# Packages lock (keep this one tracked in
+# Packages lock (keep this one tracked instead — only ignore if it causes issues)
+# /[Pp]ackages/packages-lock.json
+
+# Python bytecode from the Tools/ scene generators
+__pycache__/
+*.pyc

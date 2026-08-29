@@ -552,4 +552,56 @@ def build(name, base, colour, guids):
                 ("moveCheckpointToExit", 1),
                 ("cooldownSeconds", 1.2),
                 # Unity does not fall back to a C# field initialiser when a key
-                # is absent
+                # is absent from the YAML - it uses default(T), which for a bool
+                # is false. oneShot has to be written out or every teleporter in
+                # the game silently becomes re-entrant.
+                ("oneShot", 1),
+            ]),
+        ]
+
+    else:
+        raise SystemExit("no builder for " + name)
+
+    return "%YAML 1.1\n%TAG !u! tag:unity3d.com,2011:\n" + "".join(docs)
+
+
+def main():
+    created = ensure_script_metas()
+    if created:
+        print("script .meta created for: " + ", ".join(created))
+    else:
+        print("script .meta: all present")
+
+    guids = script_guids()
+    for stale in ("Dog.prefab", "Dog.prefab.meta"):
+        path = os.path.join(PREFABS, stale)
+        if os.path.exists(path):
+            os.remove(path)
+            print("removed " + stale + " (renamed to MonitorLizard)")
+
+    missing = [c for c in ("ChaserHazard", "FallingObject", "TrafficLane",
+                           "RisingWater", "FakeGoal", "Signpost", "Teleporter",
+                           "BikeRental", "BikeRack")
+               if c not in guids]
+    if missing:
+        raise SystemExit("no .meta GUID for: " + ", ".join(missing))
+
+    os.makedirs(PREFABS, exist_ok=True)
+    for name, base, colour in SPECS:
+        text = build(name, base, colour, guids)
+        path = os.path.join(PREFABS, name + ".prefab")
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
+
+        meta = path + ".meta"
+        guid = FIXED_GUIDS.get(name) or stable_guid("prefab:" + name)
+        with open(meta, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(PREFAB_META.format(guid=guid))
+
+        print(f"  {name+'.prefab':22} guid {guid}")
+
+    print(f"{len(SPECS)} prefabs written to Assets/Prefabs")
+
+
+if __name__ == "__main__":
+    main()

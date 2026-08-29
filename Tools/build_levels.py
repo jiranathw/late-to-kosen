@@ -516,4 +516,125 @@ def verify(level, placements):
                          f"{goal_x - last:.0f}u short of the goal - a rider "
                          "finishes on the bike")
 
-    return fail
+    return fails, warns, gates
+
+
+def report(level, placements):
+    fails, warns, gates = verify(level, placements)
+    label = "Level%d" % level["index"]
+    walk = surfaces(level["grounds"])
+    span = max(s.right for s in walk) - min(s.left for s in walk)
+    kinds = {}
+    for p in placements:
+        kinds[p.kind] = kinds.get(p.kind, 0) + 1
+
+    print(f"  {label}  {len(placements)} instances, {span:.0f}u wide, "
+          f"{level['time']:.0f}s, spawn {level['spawn']}")
+    print("        " + "  ".join(f"{k} x{v}" for k, v in sorted(kinds.items())))
+    for g in gates:
+        print("    GATE " + g)
+    for w in warns:
+        print("    WARN " + w)
+    for f in fails:
+        print("    FAIL " + f)
+    return fails
+
+
+# ============================================================================
+# ASSET WRITING
+# ============================================================================
+SCENE_META = """fileFormatVersion: 2
+guid: {guid}
+DefaultImporter:
+  externalObjects: {{}}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+"""
+
+BUILD_SETTINGS_TEMPLATE = """%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+{scenes}  m_configObjects: {{}}
+  m_UseUCBPForAssetBundles: 0
+"""
+
+
+def write_build_settings():
+    rows = "".join(
+        "  - enabled: 1\n"
+        f"    path: Assets/Scenes/{lv['scene']}.unity\n"
+        f"    guid: {lv['guid']}\n"
+        for lv in LEVELS
+    )
+    with open(BUILD_SETTINGS, "w", newline="\n") as fh:
+        fh.write(BUILD_SETTINGS_TEMPLATE.format(scenes=rows))
+    print(f"  wrote {os.path.relpath(BUILD_SETTINGS, PROJECT)}  "
+          f"({len(LEVELS)} scenes)")
+
+
+def retire_old_scenes():
+    """Delete Level3. A cut stage that is still on disk is still in the build."""
+    for name in RETIRED_SCENES:
+        for suffix in (".unity", ".unity.meta"):
+            path = os.path.join(SCENES_DIR, name + suffix)
+            if os.path.exists(path):
+                os.remove(path)
+                print(f"  removed {os.path.relpath(path, PROJECT)}  (stage cut)")
+
+
+def main():
+    check_only = "--check" in sys.argv
+
+    if not os.path.exists(SKELETON):
+        sys.exit(f"missing {SKELETON} - it is generated from a clean Level1.unity")
+    with open(SKELETON, "r", encoding="utf-8") as fh:
+        skeleton = fh.read()
+
+    print(f"physics: apex {jump_apex():.2f}u walk / {jump_apex(True):.2f}u ride, "
+          f"reach {horizontal_reach(0):.2f}u walk / {horizontal_reach(0, True):.2f}u ride")
+    print(f"budget:  gap <= {horizontal_reach(0) * GAP_SAFETY:.2f}u, "
+          f"step <= {jump_apex() * STEP_APEX:.2f}u walk / "
+          f"{jump_apex(True) * STEP_APEX:.2f}u ride")
+    print()
+
+    built, all_fails = [], []
+    for level in BUILT:
+        scene, placements = build_scene(skeleton, level)
+        all_fails += report(level, placements)
+        built.append((level, scene))
+    for level in ADOPTED:
+        print(f"  Level{level['index']}  adopted from origin/bun - not built, "
+              "not verified (see Tools/adopt_krin.py)")
+    print()
+
+    if all_fails:
+        print(f"{len(all_fails)} design rule violation(s) - nothing written.")
+        return 1
+    if check_only:
+        print("--check: layouts pass, nothing written.")
+        return 0
+
+    os.makedirs(SCENES_DIR, exist_ok=True)
+    for level, scene in built:
+        path = os.path.join(SCENES_DIR, level["scene"] + ".unity")
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(scene)
+        with open(path + ".meta", "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(SCENE_META.format(guid=level["guid"]))
+        print(f"  wrote {os.path.relpath(path, PROJECT)}  "
+              f"({len(scene) // 1024}KB)")
+
+    retire_old_scenes()
+    write_build_settings()
+    print("\nOpen Unity and let it reimport. Prefabs must exist first - "
+          "run Tools/make_prefabs.py if Assets/Prefabs is empty.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

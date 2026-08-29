@@ -187,4 +187,70 @@ public class PlayerController : MonoBehaviour
         }
         else if (rb.linearVelocity.y > 0.01f && !jumpHeld)
         {
-            rb.gravityScale = bas
+            rb.gravityScale = baseGravityScale * lowJumpMultiplier;
+        }
+        else
+        {
+            rb.gravityScale = baseGravityScale;
+        }
+    }
+
+    // THE BIKE. Mounting is free. Getting off is not.
+    //
+    // There is deliberately no timer and no "drop bike" key. BikeRack is the
+    // only thing in the game that clears IsRiding, and one of the racks on
+    // stage 1 is painted on. That is the joke, and it is why build_levels.py
+    // rule 9 checks that everything after a rack is still crossable on a bike.
+    public void MountBike()
+    {
+        if (IsRiding) return;
+        IsRiding = true;
+
+        // Inherit whatever speed you were already carrying, so the ramp in
+        // FixedUpdate starts from where you are instead of snapping you to a
+        // standstill the instant you touch the bike.
+        rideVelocity = rb.linearVelocity.x;
+    }
+
+    public void ParkBike()
+    {
+        if (!IsRiding) return;
+        IsRiding = false;
+        rideVelocity = 0f;
+    }
+
+    // Single entry point for dying, so traps and the fall-out-of-the-world
+    // check can never disagree about what happens next.
+    public void Die()
+    {
+        GameManager gm = GameManager.Instance;
+        if (gm == null) return;
+        if (gm.PlayerDied()) Respawn();
+    }
+
+    public void Respawn()
+    {
+        GameManager gm = GameManager.Instance;
+        if (gm == null) return;
+
+        rb.position = gm.GetCheckpoint();
+        rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = baseGravityScale;
+        coyoteCounter = 0f;
+        jumpBufferCounter = 0f;
+        rideVelocity = 0f;
+
+        // You KEEP the bike when you die. Handing it back at a checkpoint would
+        // be a free escape from a ride you could not end, which is the one
+        // thing this gimmick is not allowed to give you.
+
+        gm.NotifyRespawned();
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (groundCheck == null) return;
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+    }
+}

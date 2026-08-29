@@ -210,4 +210,146 @@ OBJECTS = [
     # FLOOR 2
     # ========================================================================
     checkpoint("Checkpoint_2_Floor2", 3.0, 10.0),
-    spike("Spike_02_Rise
+    spike("Spike_02_Riser", 10.0, 10.0),
+    trap("Trap_05_Bin", 19.0, 10.0),
+    hidden("Hidden_04_Landing", 24.0, 10.0),
+
+    # ========================================================================
+    # FLOOR 1
+    # ========================================================================
+    trap("Trap_06_Post", 27.0, 5.0),
+    hidden("Hidden_05_Landing", 21.0, 5.0),
+    # Read on the way out, one floor and about ninety seconds too late.
+    sign("Sign_07_Lift", 11.0, 5.0,
+         "The lift was working.  It is on the other side of the building.",
+         show=6.0),
+
+    # ========================================================================
+    # THE FOUR SHAFT KILLBLOCKS
+    #
+    # One under each mid-floor gap, two units down. A 2-3u gap is a jump you can
+    # make standing still, so falling in is a mistake rather than a difficulty
+    # spike - but it has to cost something, because the floor underneath every
+    # one of these gaps runs the other way, and dropping through would carry the
+    # player PAST content as a reward for missing a jump.
+    # ========================================================================
+    kill_floor("Void_F4", 13.0, 18.0, 2.6),
+    kill_floor("Void_F3", 15.0, 13.0, 2.6),
+    kill_floor("Void_F2", 15.0,  8.0, 2.6),
+    kill_floor("Void_F1", 15.5,  3.0, 3.0),
+
+    # ========================================================================
+    # STREET LEVEL - and the same forty units for the fifth time, from below.
+    # ========================================================================
+    sign("Sign_08_Klong", 3.0, 0.0,
+         "v   SHORTCUT  -  the klong path.  Saves 40 seconds."),
+
+    # -- THE SECRET ENDING ---------------------------------------------------
+    # Seven units down, and the apex is 3.57, so this is one-way. Reaching it is
+    # free; leaving it costs the entire tower and your checkpoint with it.
+    # One sign, latched, doing the work three used to. Three signs down here
+    # meant the punchline arrived in instalments and the player was reading
+    # rather than moving; latching it means it is still on screen while he
+    # walks into the teleporter, which is when the joke actually lands.
+    sign("Sign_Bed_1", 6.0, -7.0,
+         "SECRET ENDING  -  ROOM 402.  Your bed is still warm.",
+         latch=True, show=7.0),
+    # The loop. Destination is the spawn - the mattress you woke up on - and it
+    # drags the checkpoint back with it, so the morning genuinely restarts.
+    teleporter("Teleporter_01_Bed", 11.0, -7.0, 2.0, 21.0, move_checkpoint=True),
+
+    # -- BACK ON THE STREET --------------------------------------------------
+    # No sign on this one. A two-metre lizard sprinting at you is not a thing
+    # that needs captioning, and the word RUN two units behind it was the game
+    # explaining its own joke.
+    lizard("Lizard_01_Klong", 16.0, 0.0, chase=7.0, give_up=20.0, trigger=8.0),
+    trap("Trap_07_Cable", 26.0, 0.0),
+
+    # ========================================================================
+    # THE CHASE.  x=43 to x=92, and the only section of the stage that is not
+    # optional in any sense: on foot the ajarn catches you at about x=65 every
+    # single time, and the arithmetic is in the module docstring.
+    # ========================================================================
+    sign("Sign_10_Ajarn", 37.0, 0.0,
+         "AJARN is doing his rounds.  He is faster than you are.", show=7.0),
+    checkpoint("Checkpoint_3_Soi", 38.5, 0.0),
+    bicycle("Bicycle_01_Anywheel", 41.0, 0.0,
+            offer="ANYWHEEL  -  scan to unlock.  Ends at a rack.  Only at a rack."),
+
+    # Rest position, not spawn position: he sits here asleep until the player is
+    # past him, then takes 0.6s to stand up. 9.0 against a 7.5 walk and an 11.25
+    # ride. Gives up after 42u, which puts him five units short of the kerb -
+    # close enough to still be on screen when you park.
+    chaser("Ajarn_01_Rounds", 43.0, 0.0, chase=9.0, give_up=42.0,
+           trigger=10.0, wind_up=0.6),
+
+    # The pixel-perfect fake, and the first rack you meet - four units into a
+    # chase, which is exactly when you want it to be real.
+    bike_rack("Rack_1_Fake", 47.0, 0.0, real=False,
+              refused="CANNOT END RIDE HERE  -  outside docking zone",
+              cost=0.0),
+
+    trap("Trap_08_Roadworks", 62.0, 0.0),
+
+    # The only sign in the chase, and it latches: at 11.25 u/s a 5.5u fade is
+    # about one second of reading, which is not enough to react to the one
+    # instruction in the section you cannot skip.
+    sign("Sign_12_Dock", 80.0, 0.0, "ANYWHEEL DOCK  -  50m",
+         latch=True, show=8.0),
+    bike_rack("Rack_2_Dock", 88.0, 0.0, real=True),
+
+    # ========================================================================
+    # CHALONG KRUNG ROAD.  On foot from here - see the kerb.
+    #
+    # Two crossings with a 3.5u median between them, never one 22u gamble. Each
+    # lane is 9u long and spaces its vehicles further apart than that (6.5 x 2.0
+    # = 13.0u, 4.5 x 2.8 = 12.6u), so a lane holds at most one vehicle and the
+    # crossing is always solvable rather than usually solvable.
+    # ========================================================================
+    checkpoint("Checkpoint_4_Kerb", 96.0, 2.35),
+    sign("Sign_13_LookRight", 99.0, 2.35,
+         "CHALONG KRUNG ROAD.  Look right.", show=7.0),
+    lane("Lane_A_Motorbikes", 105.0, 2.80, 9.0, -6.5, 2.0, 0.4,
+         (1.8, 0.9), (0.95, 0.75, 0.2)),
+    lane("Lane_B_Pickups", 117.5, 2.90, 9.0, -4.5, 2.8, 1.7,
+         (2.6, 1.1), (0.85, 0.35, 0.3)),
+
+    checkpoint("Checkpoint_5_FarKerb", 125.0, 2.35),
+    trap("Trap_09_Bollard", 128.0, 2.35),
+
+    # ========================================================================
+    # THE FORECOURT.  The last lie, and the cheapest: three seconds for walking
+    # into the wrong lobby, which is what the previous hundred and forty units
+    # have trained you to do.
+    # ========================================================================
+    sign("Sign_14_Building", 132.0, 3.35, "BUILDING 12  -  main entrance  -->"),
+    fake_goal("FakeGoal_02_WrongBuilding", 134.5, 3.35,
+              "BUILDING 9  -  WRONG BUILDING", 3.0, "ENTRANCE"),
+    hidden("Hidden_06_Doorstep", 137.0, 3.35),
+    goal("Goal_Building12", 140.0, 3.35),
+]
+
+# =============================================================================
+# SCENE SETTINGS
+#
+# The verifier measures the run as goal_x minus the leftmost edge, which on a
+# stage that doubles back four times is a large underestimate: 146u of width is
+# about 248u of walking, or 33s, and rule 7 only sees 19s. 95s is set against
+# the real number and leaves room for roughly two deaths.
+#
+# kill_y is -12, one unit under the pit floor, so the secret is survivable and
+# missing the klong jump into open air is not.
+#
+# The spawn is the mattress. It is also where Teleporter_01_Bed sends you.
+# =============================================================================
+LEVEL = dict(
+    index=1,
+    scene="Level1",
+    guid="015d47d998009ba4ab9f815ba8ce3520",   # committed - must not change
+    time=95.0,
+    kill_y=-12.0,
+    spawn=(2.0, 21.0),
+    grounds=GROUND,
+    objects=OBJECTS,
+    route=ROUTE,
+)

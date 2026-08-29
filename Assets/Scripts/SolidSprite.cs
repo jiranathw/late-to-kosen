@@ -30,4 +30,15 @@ public static class SolidSprite
         //
         // FullRect is not optional. Sprite.Create defaults to a Tight mesh, and
         // both callers (TrafficLane, RisingWater) use SpriteDrawMode.Sliced,
-        // which needs a full quad to stret
+        // which needs a full quad to stretch across. With a tight mesh Unity
+        // logs "Sprite Tiling might not appear correctly because the Sprite used
+        // is not generated with Full Rect" and draws the vehicle at the wrong
+        // shape while its BoxCollider2D stays the correct size - so the
+        // motorbikes kill you from somewhere other than where they look.
+        cached = Sprite.Create(tex, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f),
+                               1f, 0, SpriteMeshType.FullRect);
+        cached.name = "SolidWhite";
+        cached.hideFlags = HideFlags.HideAndDontSave;
+        return cached;
+    }
+}

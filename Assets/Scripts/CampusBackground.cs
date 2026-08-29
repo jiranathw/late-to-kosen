@@ -57,4 +57,91 @@ public class CampusBackground : MonoBehaviour
         GameObject bgObj;
         if (found != null)
         {
-            bgObj = found.gameObj
+            bgObj = found.gameObject;
+        }
+        else
+        {
+            bgObj = new GameObject("KosenBackground");
+            // worldPositionStays: false. The camera moves with the player, and
+            // keeping the world position on reparent would drop the background
+            // wherever the camera happened to be on frame one.
+            bgObj.transform.SetParent(cam.transform, false);
+        }
+
+        // Centred, not offset. The image is composed with the horizon low and
+        // the sky at the top; shifting it up cropped the sky away and put the
+        // building's blank white facade across the middle of the play area.
+        bgObj.transform.localPosition = new Vector3(0f, 0f, 10f);
+        bgObj.transform.localRotation = Quaternion.identity;
+
+        SpriteRenderer sr = bgObj.GetComponent<SpriteRenderer>();
+        if (sr == null) sr = bgObj.AddComponent<SpriteRenderer>();
+
+        sr.sortingOrder = -100;
+        sr.color = new Color(1f, 1f, 1f, Opacity);
+        if (sr.sprite == null) sr.sprite = FindSprite();
+
+        CampusBackground fitter = bgObj.GetComponent<CampusBackground>();
+        if (fitter == null) fitter = bgObj.AddComponent<CampusBackground>();
+        fitter.Bind(cam, sr);
+    }
+
+    // Resources.Load first, because it is the only one of the two that works in
+    // a BUILD. Resources.FindObjectsOfTypeAll only sees sprites that are already
+    // loaded, which in the editor is everything and in a player is whatever
+    // happens to be referenced by the scene - so relying on it alone would give
+    // us a background that vanishes the moment we ship a standalone.
+    private static Sprite FindSprite()
+    {
+        Sprite loaded = Resources.Load<Sprite>("Sprites/background_kosen");
+        if (loaded != null) return loaded;
+
+        Sprite[] all = Resources.FindObjectsOfTypeAll<Sprite>();
+        foreach (Sprite s in all)
+        {
+            if (s != null && s.name == "background_kosen") return s;
+        }
+        return null;
+    }
+
+    private void Bind(Camera camera, SpriteRenderer renderer)
+    {
+        cam = camera;
+        sr = renderer;
+        Fit();
+    }
+
+    // Cheap enough to poll: three comparisons a frame, and it catches the two
+    // things that actually change the required scale - the player resizing the
+    // window, and the Game view aspect dropdown during a playtest.
+    private void LateUpdate()
+    {
+        if (cam == null) return;
+
+        if (Screen.width == lastWidth &&
+            Screen.height == lastHeight &&
+            Mathf.Approximately(cam.orthographicSize, lastOrthoSize)) return;
+
+        Fit();
+    }
+
+    private void Fit()
+    {
+        if (cam == null || sr == null || sr.sprite == null) return;
+
+        Vector2 sprite = sr.sprite.bounds.size;      // world units, PPU applied
+        if (sprite.x <= 0f || sprite.y <= 0f) return;
+
+        float viewHeight = cam.orthographic ? cam.orthographicSize * 2f : 10f;
+        float viewWidth = viewHeight * cam.aspect;
+
+        // Max, not min: contain would letterbox and expose the clear colour at
+        // the edges. Cover overfills and crops, which for scenery is free.
+        float k = Mathf.Max(viewWidth / sprite.x, viewHeight / sprite.y);
+        transform.localScale = new Vector3(k, k, 1f);
+
+        lastWidth = Screen.width;
+        lastHeight = Screen.height;
+        lastOrthoSize = cam.orthographicSize;
+    }
+}

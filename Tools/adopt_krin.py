@@ -315,4 +315,78 @@ def main() -> int:
     b = set_scalar(b, "m_Interpolate", 1)
     docs[i] = (h, b)
 
- 
+    # 4 - Player start position --------------------------------------------
+    i = find(docs, 771653310)
+    h, b = docs[i]
+    b = re.sub(r"m_LocalPosition: \{x: [^}]*\}",
+               "m_LocalPosition: {x: -28.66, y: 0.89, z: 0}", b, count=1)
+    docs[i] = (h, b)
+
+    # 5 - checkpoints -------------------------------------------------------
+    for anchor, name, x, y in CHECKPOINTS:
+        i = find(docs, anchor)
+        h, b = docs[i]
+        b = set_override(b, "m_Name", name)
+        b = set_override(b, "m_LocalPosition.x", x)
+        b = set_override(b, "m_LocalPosition.y", y)
+        for prop in ("m_LocalScale.x", "m_LocalScale.y", "m_LocalScale.z"):
+            if has_override(b, prop):
+                b = set_override(b, prop, 1)
+        docs[i] = (h, b)
+
+    # 6 - a floor for the Goal, and the Goal moved onto it ------------------
+    anchor, gx, gy = GOAL
+    i = find(docs, anchor)
+    h, b = docs[i]
+    b = set_override(b, "m_LocalPosition.x", gx)
+    b = set_override(b, "m_LocalPosition.y", gy)
+    docs[i] = (h, b)
+
+    tail = join_docs(docs)
+    new_blocks = "".join(ground_instance(a, n, x, y, sx, sy)
+                         for a, n, x, y, sx, sy in NEW_GROUND)
+    # insert before SceneRoots, and register the roots
+    tail = tail.replace("--- !u!1660057539 &9223372036854775807",
+                        new_blocks + "--- !u!1660057539 &9223372036854775807", 1)
+    roots = "".join(f"  - {{fileID: {a}}}\n" for a, *_ in NEW_GROUND)
+    tail = re.sub(r"(--- !u!1660057539 &9223372036854775807\nSceneRoots:\n"
+                  r"  m_ObjectHideFlags: 0\n  m_Roots:\n)",
+                  r"\1" + roots, tail, count=1)
+    docs = split_docs(tail)
+
+    # 7 - the secret-ending captions ---------------------------------------
+    for anchor, wx, wy, size in ((1314369838, 63.2, -6.9, None),
+                                 (1752294435, 63.2, -8.1, (16, 8))):
+        i = find(docs, anchor)
+        h, b = docs[i]
+        ax = round(wx - CANVAS_ORIGIN[0], 5)
+        ay = round(wy - CANVAS_ORIGIN[1], 5)
+        b = re.sub(r"m_AnchoredPosition: \{x: [^}]*\}",
+                   f"m_AnchoredPosition: {{x: {ax}, y: {ay}}}", b, count=1)
+        if size:
+            b = re.sub(r"m_SizeDelta: \{x: [^}]*\}",
+                       f"m_SizeDelta: {{x: {size[0]}, y: {size[1]}}}", b, count=1)
+        docs[i] = (h, b)
+
+    i = find(docs, 1752294436)
+    h, b = docs[i]
+    # lambda, not a literal replacement: SECRET_TEXT contains backslash-n
+    # sequences that TMP expands itself, and re.sub would otherwise eat them as
+    # escape sequences and burst the YAML scalar across five unindented lines.
+    b = re.sub(r"\n  m_text: .*?\n  m_isRightToLeft:",
+               lambda _m: f"\n  m_text: {SECRET_TEXT}\n  m_isRightToLeft:",
+               b, count=1, flags=re.S)
+    assert "enjoy the walk." in b
+    docs[i] = (h, b)
+
+    out = join_docs(docs)
+    OUT.write_text(out, encoding="utf-8", newline="\n")
+
+    print(f"wrote {OUT.relative_to(ROOT)}  ({len(out.splitlines())} lines)")
+    print(f"physics: apex {APEX:.2f}u  reach {REACH:.2f}u  "
+          f"max gap {MAX_GAP:.2f}u  max step {MAX_STEP:.2f}u")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
