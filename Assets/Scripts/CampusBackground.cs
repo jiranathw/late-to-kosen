@@ -79,24 +79,32 @@ public class CampusBackground : MonoBehaviour
 
         sr.sortingOrder = -100;
         sr.color = new Color(1f, 1f, 1f, Opacity);
-        if (sr.sprite == null) sr.sprite = FindSprite();
+        sr.sprite = FindSprite();
 
         CampusBackground fitter = bgObj.GetComponent<CampusBackground>();
         if (fitter == null) fitter = bgObj.AddComponent<CampusBackground>();
         fitter.Bind(cam, sr);
     }
 
-    // Resources.Load first, because it is the only one of the two that works in
-    // a BUILD. Resources.FindObjectsOfTypeAll only sees sprites that are already
-    // loaded, which in the editor is everything and in a player is whatever
-    // happens to be referenced by the scene - so relying on it alone would give
-    // us a background that vanishes the moment we ship a standalone.
     private static Sprite FindSprite()
     {
-        Sprite loaded = Resources.Load<Sprite>("Sprites/background_kosen");
+        string sceneName = SceneManager.GetActiveScene().name;
+        string spriteName = (sceneName == "Level1") ? "background_stage1" : "background_kosen";
+
+        // Try stage-specific sprite first
+        Sprite loaded = Resources.Load<Sprite>("Sprites/" + spriteName);
         if (loaded != null) return loaded;
 
         Sprite[] all = Resources.FindObjectsOfTypeAll<Sprite>();
+        foreach (Sprite s in all)
+        {
+            if (s != null && s.name == spriteName) return s;
+        }
+
+        // Fallback to background_kosen if stage1 is missing
+        Sprite fallback = Resources.Load<Sprite>("Sprites/background_kosen");
+        if (fallback != null) return fallback;
+
         foreach (Sprite s in all)
         {
             if (s != null && s.name == "background_kosen") return s;
