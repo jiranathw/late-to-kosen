@@ -305,18 +305,19 @@ public class PlayerController : MonoBehaviour
         }
 
         float elapsed = 0f;
-        float blinkInterval = 0.08f;
-        bool isDim = false;
+        float blinkInterval = 0.09f;
+        bool isVisible = true;
 
         while (elapsed < duration)
         {
-            isDim = !isDim;
-            sr.color = isDim ? new Color(1f, 1f, 1f, 0.25f) : Color.white;
+            isVisible = !isVisible;
+            sr.enabled = isVisible;
 
             yield return new WaitForSeconds(blinkInterval);
             elapsed += blinkInterval;
         }
 
+        sr.enabled = true;
         sr.color = Color.white;
         IsInvulnerable = false;
     }
