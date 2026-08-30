@@ -147,6 +147,7 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, force);
             jumpBufferCounter = 0f; // consume both or a single press double-jumps
             coyoteCounter = 0f;
+            AudioManager.Instance?.PlayJumpSFX();
         }
 
         if (moveInput != 0f)
@@ -225,6 +226,7 @@ public class PlayerController : MonoBehaviour
     {
         GameManager gm = GameManager.Instance;
         if (gm == null) return;
+        AudioManager.Instance?.PlayDeathSFX();
         if (gm.PlayerDied()) Respawn();
     }
 
@@ -240,10 +242,11 @@ public class PlayerController : MonoBehaviour
         jumpBufferCounter = 0f;
         rideVelocity = 0f;
 
-        // You KEEP the bike when you die. Handing it back at a checkpoint would
-        // be a free escape from a ride you could not end, which is the one
-        // thing this gimmick is not allowed to give you.
+        // Reset all level traps, falling rocks, and beams for the fresh attempt
+        FallingRock.ResetAllRocks();
+        DeathBeam.ResetAllBeams();
 
+        AudioManager.Instance?.PlayRespawnSFX();
         gm.NotifyRespawned();
     }
 

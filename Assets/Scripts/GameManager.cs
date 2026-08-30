@@ -234,6 +234,7 @@ public class GameManager : MonoBehaviour
         DidWin = true;
         Time.timeScale = 1f;
 
+        AudioManager.Instance?.PlayStageClearSFX();
         GameSession.Instance?.RecordClear(LevelIndex, Score, DeathCount, TimeUsed);
     }
 

@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Self-bootstraps background music for each stage.
-// BGM loops continuously with smooth volume control.
+// Self-bootstraps background music and 8-bit sound effects.
+// BGM loops continuously while SFX play independently on a separate audio source.
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
@@ -18,10 +18,19 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private Stage1Track selectedStage1Track = Stage1Track.MorningPanic;
     [Range(0f, 1f)]
     [SerializeField] private float musicVolume = 0.45f;
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 0.65f;
 
     private AudioSource bgmSource;
+    private AudioSource sfxSource;
+
     private AudioClip stage1Clip;
     private AudioClip stage2Clip;
+
+    private AudioClip jumpClip;
+    private AudioClip deathClip;
+    private AudioClip respawnClip;
+    private AudioClip stageClearClip;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -50,6 +59,11 @@ public class AudioManager : MonoBehaviour
         bgmSource.playOnAwake = false;
         bgmSource.volume = musicVolume;
 
+        sfxSource = gameObject.AddComponent<AudioSource>();
+        sfxSource.loop = false;
+        sfxSource.playOnAwake = false;
+        sfxSource.volume = sfxVolume;
+
         LoadAudioClips();
 
         SceneManager.sceneLoaded += (scene, mode) => OnSceneReady();
@@ -72,33 +86,27 @@ public class AudioManager : MonoBehaviour
                 break;
         }
 
-        stage1Clip = Resources.Load<AudioClip>("Audio/" + t1Name);
-        if (stage1Clip == null)
-        {
-            AudioClip[] all = Resources.FindObjectsOfTypeAll<AudioClip>();
-            foreach (var clip in all)
-            {
-                if (clip != null && clip.name == t1Name)
-                {
-                    stage1Clip = clip;
-                    break;
-                }
-            }
-        }
+        stage1Clip = LoadClip("Audio/" + t1Name);
+        stage2Clip = LoadClip("Audio/bgm_stage2_school_corridor");
 
-        stage2Clip = Resources.Load<AudioClip>("Audio/bgm_stage2_school_corridor");
-        if (stage2Clip == null)
+        jumpClip = LoadClip("Audio/sfx_jump");
+        deathClip = LoadClip("Audio/sfx_death");
+        respawnClip = LoadClip("Audio/sfx_respawn");
+        stageClearClip = LoadClip("Audio/sfx_stage_clear");
+    }
+
+    private AudioClip LoadClip(string resourcePath)
+    {
+        AudioClip clip = Resources.Load<AudioClip>(resourcePath);
+        if (clip != null) return clip;
+
+        string simpleName = System.IO.Path.GetFileName(resourcePath);
+        AudioClip[] all = Resources.FindObjectsOfTypeAll<AudioClip>();
+        foreach (var c in all)
         {
-            AudioClip[] all = Resources.FindObjectsOfTypeAll<AudioClip>();
-            foreach (var clip in all)
-            {
-                if (clip != null && clip.name == "bgm_stage2_school_corridor")
-                {
-                    stage2Clip = clip;
-                    break;
-                }
-            }
+            if (c != null && c.name == simpleName) return c;
         }
+        return null;
     }
 
     public void SwitchStage1Track(Stage1Track newTrack)
@@ -127,7 +135,6 @@ public class AudioManager : MonoBehaviour
         }
         else if (sceneName == "Level2" || sceneName == "Level1_Krin")
         {
-            // Play dedicated Stage 2 peaceful-yet-tense school corridor BGM
             AudioClip target = stage2Clip != null ? stage2Clip : stage1Clip;
             if (target != null && bgmSource.clip != target)
             {
@@ -151,9 +158,43 @@ public class AudioManager : MonoBehaviour
         if (bgmSource != null) bgmSource.Stop();
     }
 
-    public void SetVolume(float vol)
+    // --- SFX Playback Methods ---
+
+    public void PlayJumpSFX()
+    {
+        PlaySFX(jumpClip, 0.55f);
+    }
+
+    public void PlayDeathSFX()
+    {
+        PlaySFX(deathClip, 0.85f);
+    }
+
+    public void PlayRespawnSFX()
+    {
+        PlaySFX(respawnClip, 0.75f);
+    }
+
+    public void PlayStageClearSFX()
+    {
+        PlaySFX(stageClearClip, 0.90f);
+    }
+
+    public void PlaySFX(AudioClip clip, float volumeScale = 1.0f)
+    {
+        if (clip == null || sfxSource == null) return;
+        sfxSource.PlayOneShot(clip, sfxVolume * volumeScale);
+    }
+
+    public void SetMusicVolume(float vol)
     {
         musicVolume = Mathf.Clamp01(vol);
         if (bgmSource != null) bgmSource.volume = musicVolume;
+    }
+
+    public void SetSFXVolume(float vol)
+    {
+        sfxVolume = Mathf.Clamp01(vol);
+        if (sfxSource != null) sfxSource.volume = sfxVolume;
     }
 }
