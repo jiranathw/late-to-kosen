@@ -98,7 +98,7 @@ public class HudUI : MonoBehaviour
         bikeText = MakeText(canvasGo.transform, "Bike", 30f,
                             new Vector2(0f, 1f), new Vector2(30f, -160f),
                             TextAlignmentOptions.TopLeft, new Vector2(560f, 44f),
-                            new Color(0.35f, 0.90f, 1f), 0.35f, new Color32(0, 0, 0, 255));
+                            new Color(0.55f, 0.95f, 0.20f, 1f), 0.35f, new Color32(0, 0, 0, 255));
         bikeText.gameObject.SetActive(false);
 
         // Score: top-right with bold dark stroke outline
@@ -190,6 +190,6 @@ public class HudUI : MonoBehaviour
 
         bool riding = player != null && player.IsRiding;
         if (bikeText.gameObject.activeSelf != riding) bikeText.gameObject.SetActive(riding);
-        if (riding) bikeText.text = "ON A BIKE - find a rack to park";
+        if (riding) bikeText.text = "ON ANYWHEEL BIKE - park at a rack to finish";
     }
 }
