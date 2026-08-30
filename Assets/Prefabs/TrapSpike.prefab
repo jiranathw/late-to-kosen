@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6100000000000000303}
   - component: {fileID: 6100000000000000304}
   - component: {fileID: 6100000000000000305}
+  - component: {fileID: 6100000000000000306}
   m_Layer: 0
   m_Name: TrapSpike
   m_TagString: Untagged
@@ -157,3 +158,15 @@ MonoBehaviour:
   riseSpeed: 14
   retractDelay: 1.2
   retractSpeed: 3
+--- !u!114 &6100000000000000306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6100000000000000301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c3e1a92b47d4f0e9c6a1d5e7b0f2c44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelPropArt

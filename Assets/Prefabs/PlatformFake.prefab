@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6100000000000000203}
   - component: {fileID: 6100000000000000204}
   - component: {fileID: 6100000000000000205}
+  - component: {fileID: 6100000000000000206}
   m_Layer: 3
   m_Name: PlatformFake
   m_TagString: Untagged
@@ -157,3 +158,15 @@ MonoBehaviour:
   wobbleSpeed: 60
   fallGravity: 4
   destroyAfter: 2.5
+--- !u!114 &6100000000000000206
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6100000000000000201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4a91e7b2d6f4803a5e18c9d0b7f3a21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelSurfaceArt

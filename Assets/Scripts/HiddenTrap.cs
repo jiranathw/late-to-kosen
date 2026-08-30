@@ -44,7 +44,12 @@ public class HiddenTrap : MonoBehaviour
         if (sprite != null)
         {
             sprite.enabled = true;
-            sprite.color = revealedColor;
+            // Keep the wet-floor sprite colours. The pink tint was for the
+            // placeholder square so a revealed trap was still readable.
+            if (sprite.sprite == null || sprite.sprite.name == "Square")
+                sprite.color = revealedColor;
+            else
+                sprite.color = Color.white;
         }
     }
 }

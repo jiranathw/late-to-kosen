@@ -41,7 +41,13 @@ public class FakeGoal : MonoBehaviour
 
         revealed = true;
 
-        if (sprite != null) sprite.color = revealedColor;
+        if (sprite != null)
+        {
+            if (sprite.sprite == null || sprite.sprite.name == "Square")
+                sprite.color = revealedColor;
+            else
+                sprite.color = Color.white;
+        }
         if (sign != null) sign.Say(revealText, true);
         if (timePenalty > 0f) GameManager.Instance?.SpendTime(timePenalty);
     }
