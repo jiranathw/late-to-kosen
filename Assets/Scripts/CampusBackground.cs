@@ -89,7 +89,7 @@ public class CampusBackground : MonoBehaviour
     private static Sprite FindSprite()
     {
         string sceneName = SceneManager.GetActiveScene().name;
-        string spriteName = (sceneName == "Level1") ? "background_stage1" : "background_kosen";
+        string spriteName = (sceneName == "Level1" || sceneName == "MainMenu") ? "background_stage1" : "background_kosen";
 
         // Try stage-specific sprite first
         Sprite loaded = Resources.Load<Sprite>("Sprites/" + spriteName);
