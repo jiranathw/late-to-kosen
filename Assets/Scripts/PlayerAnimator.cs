@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // Cycles through 8-bit sprite frames for the KOSEN student based on movement.
-// Handles walking/running foot-stepping animation and air/jump pose.
+// Handles walking/running foot-stepping animation, air/jump pose, and knocked-out death pose.
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(PlayerController))]
 public class PlayerAnimator : MonoBehaviour
@@ -10,6 +10,7 @@ public class PlayerAnimator : MonoBehaviour
     [SerializeField] private Sprite idleSprite;
     [SerializeField] private Sprite[] runSprites;
     [SerializeField] private Sprite jumpSprite;
+    [SerializeField] private Sprite deadSprite;
 
     [Header("Frame Rate")]
     [SerializeField] private float walkFps = 9f;
@@ -20,6 +21,7 @@ public class PlayerAnimator : MonoBehaviour
     private PlayerController controller;
     private float animTimer;
     private int currentRunFrame;
+    private bool isDeadPose;
 
     private void Awake()
     {
@@ -40,6 +42,7 @@ public class PlayerAnimator : MonoBehaviour
         // 1. Try loading from Resources/Sprites/
         if (idleSprite == null) idleSprite = Resources.Load<Sprite>("Sprites/player_idle");
         if (jumpSprite == null) jumpSprite = Resources.Load<Sprite>("Sprites/player_jump");
+        if (deadSprite == null) deadSprite = Resources.Load<Sprite>("Sprites/player_dead");
 
         if (runSprites == null || runSprites.Length == 0 || runSprites[0] == null)
         {
@@ -55,7 +58,7 @@ public class PlayerAnimator : MonoBehaviour
         }
 
         // 2. Fallback: Search all loaded sprites by name
-        if (idleSprite == null || runSprites == null || runSprites.Length == 0)
+        if (idleSprite == null || runSprites == null || runSprites.Length == 0 || deadSprite == null)
         {
             Sprite[] all = Resources.FindObjectsOfTypeAll<Sprite>();
             Sprite r1 = null, r2 = null, r3 = null, r4 = null;
@@ -63,6 +66,7 @@ public class PlayerAnimator : MonoBehaviour
             {
                 if (s == null) continue;
                 if (s.name == "player_idle" && idleSprite == null) idleSprite = s;
+                else if (s.name == "player_dead" && deadSprite == null) deadSprite = s;
                 else if (s.name == "player_run_1") r1 = s;
                 else if (s.name == "player_run_2") r2 = s;
                 else if (s.name == "player_run_3") r3 = s;
@@ -81,9 +85,24 @@ public class PlayerAnimator : MonoBehaviour
         }
     }
 
+    public void SetDeadPose(bool dead)
+    {
+        isDeadPose = dead;
+        if (sr == null) return;
+
+        if (dead)
+        {
+            if (deadSprite != null) sr.sprite = deadSprite;
+        }
+        else
+        {
+            if (idleSprite != null) sr.sprite = idleSprite;
+        }
+    }
+
     private void Update()
     {
-        if (sr == null) return;
+        if (sr == null || isDeadPose) return;
 
         // In air / jumping
         if (rb != null && Mathf.Abs(rb.linearVelocity.y) > 0.35f)
@@ -98,8 +117,6 @@ public class PlayerAnimator : MonoBehaviour
 
         if ((Mathf.Abs(inputX) > 0.05f || velX > 0.1f) && runSprites != null && runSprites.Length > 0)
         {
-            // Riding is the only fast state left now that sprint is gone, so
-            // the fast frame rate follows the bike instead of the Shift key.
             float fps = (controller != null && controller.IsRiding) ? sprintFps : walkFps;
             animTimer += Time.deltaTime;
             if (animTimer >= 1f / fps)

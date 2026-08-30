@@ -247,10 +247,12 @@ public class PlayerController : MonoBehaviour
         AudioManager.Instance?.PlayDeathSFX();
 
         rb.linearVelocity = Vector2.zero;
-        rb.simulated = false;
+
+        // Switch to knocked-out flat-on-the-ground pose with dizzy stars
+        GetComponent<PlayerAnimator>()?.SetDeadPose(true);
 
         SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null) sr.enabled = false;
+        if (sr != null) sr.enabled = true;
 
         bool hasLifeLeft = gm.PlayerDied();
         if (hasLifeLeft)
@@ -280,8 +282,15 @@ public class PlayerController : MonoBehaviour
         rideVelocity = 0f;
         isDead = false;
 
+        // Restore normal standing / idle pose
+        GetComponent<PlayerAnimator>()?.SetDeadPose(false);
+
         SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null) sr.enabled = true;
+        if (sr != null)
+        {
+            sr.enabled = true;
+            sr.color = Color.white;
+        }
 
         // Reset all level traps, falling rocks, and beams for the fresh attempt
         FallingRock.ResetAllRocks();
