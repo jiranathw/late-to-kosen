@@ -126,7 +126,7 @@ public class AudioManager : MonoBehaviour
 
         LoadAudioClips();
 
-        if (sceneName == "Level1")
+        if (sceneName == "Level1" || sceneName == "MainMenu")
         {
             if (stage1Clip != null && bgmSource.clip != stage1Clip)
             {
