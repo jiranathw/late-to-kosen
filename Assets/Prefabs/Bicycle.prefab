@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6100000000000000404}
   - component: {fileID: 6100000000000000406}
   - component: {fileID: 6100000000000000407}
+  - component: {fileID: 6100000000000000408}
   m_Layer: 0
   m_Name: Bicycle
   m_TagString: Untagged
@@ -176,3 +177,15 @@ MonoBehaviour:
   color: {r: 0.6, g: 0.92, b: 1, a: 1}
   playerTag: Player
   latch: 0
+--- !u!114 &6100000000000000408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6100000000000000401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c3e1a92b47d4f0e9c6a1d5e7b0f2c44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelPropArt
