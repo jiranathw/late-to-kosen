@@ -22,6 +22,13 @@ public class GameManager : MonoBehaviour
     public string LevelSubtitle => GameSession.SubtitleFor(LevelIndex);
     public bool IsFinalLevel => GameSession.IsFinalLevel(LevelIndex);
 
+    [Header("Stage Intro")]
+    [SerializeField] private float introDuration = 2.2f;
+    public bool IsIntroActive { get; private set; } = true;
+    public float IntroDuration => introDuration;
+    public float IntroRemaining => Mathf.Max(0f, introTimer);
+    private float introTimer;
+
     [Header("Timer Settings")]
     [SerializeField] private float startingTime = 85f; // seconds before the bell rings
     public float TimeRemaining { get; private set; }
@@ -120,6 +127,9 @@ public class GameManager : MonoBehaviour
         LoseReason = null;
         currentCheckpoint = defaultSpawnPoint != null ? defaultSpawnPoint.position : Vector3.zero;
 
+        IsIntroActive = true;
+        introTimer = introDuration;
+
         GameObject p = GameObject.FindGameObjectWithTag("Player");
         if (p != null)
         {
@@ -131,6 +141,17 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         if (IsGameOver || IsPaused) return;
+
+        if (IsIntroActive)
+        {
+            introTimer -= Time.deltaTime;
+            if (introTimer <= 0f)
+            {
+                introTimer = 0f;
+                IsIntroActive = false;
+            }
+            return;
+        }
 
         if (playerTransform != null)
         {

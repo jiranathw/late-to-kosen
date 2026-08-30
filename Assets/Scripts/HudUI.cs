@@ -3,26 +3,14 @@ using UnityEngine.UI;
 using TMPro;
 
 // Lives, score, and whether you are stuck on a rented bicycle.
-//
-// The sprint bar that used to sit here is gone with sprint itself (28 Aug (evening)).
-// What replaced it is the bike readout, which is not a timer any more: the
-// Anywheel bike has no duration, you are on it until you find a real rack, so
-// the HUD's job is to say ON A BIKE and to keep saying it until you park.
-//
-// Built at runtime for the same reason as ResultUI and PauseMenu: no scene
-// wiring means nothing to accidentally unassign, and it shows up in every
-// scene in the build automatically. The timer and death counter still live on
-// the scene's own Canvas - this sits underneath them.
-//
-// Lives are drawn as plain UI Images, not heart characters, because the
-// default TextMeshPro font (LiberationSans) has no heart glyph and would
-// render empty boxes. Same reason the rest of the UI is ASCII.
+// Hides during stage intro card so the opening scene and player character remain completely clean.
 public class HudUI : MonoBehaviour
 {
     private const int MaxLifeIcons = 10;
 
     private static HudUI instance;
 
+    private CanvasGroup hudGroup;
     private TMP_Text scoreText;
     private TMP_Text bikeText;
     private readonly Image[] lifeIcons = new Image[MaxLifeIcons];
@@ -61,13 +49,12 @@ public class HudUI : MonoBehaviour
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         scaler.matchWidthOrHeight = 0.5f;
 
-        CanvasGroup group = canvasGo.AddComponent<CanvasGroup>();
-        group.interactable = false;
-        group.blocksRaycasts = false;
+        hudGroup = canvasGo.AddComponent<CanvasGroup>();
+        hudGroup.interactable = false;
+        hudGroup.blocksRaycasts = false;
+        hudGroup.alpha = 0f;
 
-        // Lives: a row of blocks, top-left, pushed clear of the scene
-        // Canvas's TimerText which sits at (30, -30) and is 50 tall.
-        // Score likewise clears DeathCountText at (-30, -30).
+        // Lives: top-left
         for (int i = 0; i < MaxLifeIcons; i++)
         {
             GameObject go = new GameObject($"Life{i}");
@@ -87,17 +74,14 @@ public class HudUI : MonoBehaviour
             go.SetActive(false);
         }
 
-        // Bike status, in the space the sprint bar used to occupy. Hidden until
-        // the player picks a bike up, then permanently on, because "you are
-        // still on the bike" is the entire joke and a readout that times itself
-        // out would undercut it.
+        // Bike status
         bikeText = MakeText(canvasGo.transform, "Bike", 26f,
                             new Vector2(0f, 1f), new Vector2(32f, -140f),
                             TextAlignmentOptions.TopLeft, new Vector2(560f, 40f));
         bikeText.color = new Color(0.35f, 0.85f, 1f);
         bikeText.gameObject.SetActive(false);
 
-        // Score, top-right under the scene's death counter
+        // Score: top-right
         scoreText = MakeText(canvasGo.transform, "Score", 38f,
                              new Vector2(1f, 1f), new Vector2(-30f, -92f),
                              TextAlignmentOptions.TopRight, new Vector2(600f, 100f));
@@ -128,7 +112,13 @@ public class HudUI : MonoBehaviour
     private void Update()
     {
         GameManager gm = GameManager.Instance;
-        if (gm == null) return;
+        if (gm == null || gm.IsGameOver || gm.IsIntroActive)
+        {
+            if (hudGroup != null) hudGroup.alpha = 0f;
+            return;
+        }
+
+        if (hudGroup != null) hudGroup.alpha = 1f;
 
         int total = Mathf.Clamp(gm.StartingLives, 0, MaxLifeIcons);
         int left = Mathf.Clamp(gm.Lives, 0, total);

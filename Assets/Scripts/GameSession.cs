@@ -33,14 +33,14 @@ public class GameSession : MonoBehaviour
 
     public static readonly string[] Titles =
     {
-        "LATE",
-        "INSIDE",
+        "LATE TO KOSEN",
+        "INSIDE THE KOSEN",
     };
 
     public static readonly string[] Subtitles =
     {
-        "07:42  -  your room to the gate of Building 12",
-        "07:54  -  the building, and it is not done with you",
+        "08:25  -  your room to the gate of Building 12",
+        "the building, and it is not done with you",
     };
 
     private readonly int[] levelScore = new int[LevelCount];

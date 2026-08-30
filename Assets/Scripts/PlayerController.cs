@@ -122,10 +122,10 @@ public class PlayerController : MonoBehaviour
     {
         GameManager gm = GameManager.Instance;
 
-        if (gm != null && (gm.IsGameOver || gm.IsPaused))
+        if (gm != null && (gm.IsGameOver || gm.IsPaused || gm.IsIntroActive))
         {
             // Zero the input so the player doesn't drift or bank a jump while
-            // the pause menu is up. Time.timeScale already froze the physics.
+            // the pause menu or stage intro is up.
             moveInput = 0f;
             jumpBufferCounter = 0f;
             return;
@@ -172,6 +172,14 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        GameManager gm = GameManager.Instance;
+        if (gm != null && gm.IsIntroActive)
+        {
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            ApplyJumpGravity();
+            return;
+        }
+
         float target = moveInput * moveSpeed * (IsRiding ? bikeSpeedMultiplier : 1f);
 
         if (IsRiding && bikeAccelTime > 0f)
