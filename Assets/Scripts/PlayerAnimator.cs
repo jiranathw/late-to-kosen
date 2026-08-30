@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// Cycles through 8-bit sprite frames for the KOSEN student based on movement.
+// Cycles through 8-bit sprite frames for the selected KOSEN student character based on movement.
+// Supports 3 selectable uniforms (Formal White Shirt, PE Sport Orange, Workshop Dark Navy)
 // Handles:
 // 1. Walking/running foot-stepping animation on foot
 // 2. Anywheel Green Bicycle riding animation (pedaling cycle + mid-air bunny hop) when IsRiding == true
@@ -43,59 +44,57 @@ public class PlayerAnimator : MonoBehaviour
             sr.color = Color.white;
         }
 
-        LoadSprites();
+        LoadSelectedCharacterSprites();
     }
 
-    private void LoadSprites()
+    public void LoadSelectedCharacterSprites()
     {
-        // 1. Foot Sprites
-        if (idleSprite == null) idleSprite = Resources.Load<Sprite>("Sprites/player_idle");
-        if (jumpSprite == null) jumpSprite = Resources.Load<Sprite>("Sprites/player_jump");
-        if (deadSprite == null) deadSprite = Resources.Load<Sprite>("Sprites/player_dead");
+        int charId = PlayerPrefs.GetInt("SelectedCharacter", 0);
+        string prefix = $"Sprites/char_{charId}_";
 
-        if (runSprites == null || runSprites.Length == 0 || runSprites[0] == null)
+        // 1. Foot Sprites for Selected Character
+        idleSprite = Resources.Load<Sprite>(prefix + "idle") ?? Resources.Load<Sprite>("Sprites/player_idle");
+        jumpSprite = Resources.Load<Sprite>(prefix + "jump") ?? Resources.Load<Sprite>("Sprites/player_jump");
+        deadSprite = Resources.Load<Sprite>(prefix + "dead") ?? Resources.Load<Sprite>("Sprites/player_dead");
+
+        Sprite r1 = Resources.Load<Sprite>(prefix + "run_1") ?? Resources.Load<Sprite>("Sprites/player_run_1");
+        Sprite r2 = Resources.Load<Sprite>(prefix + "run_2") ?? Resources.Load<Sprite>("Sprites/player_run_2");
+        Sprite r3 = Resources.Load<Sprite>(prefix + "run_3") ?? Resources.Load<Sprite>("Sprites/player_run_3");
+        Sprite r4 = Resources.Load<Sprite>(prefix + "run_4") ?? Resources.Load<Sprite>("Sprites/player_run_4");
+
+        if (r1 != null && r2 != null && r3 != null && r4 != null)
         {
-            Sprite r1 = Resources.Load<Sprite>("Sprites/player_run_1");
-            Sprite r2 = Resources.Load<Sprite>("Sprites/player_run_2");
-            Sprite r3 = Resources.Load<Sprite>("Sprites/player_run_3");
-            Sprite r4 = Resources.Load<Sprite>("Sprites/player_run_4");
+            runSprites = new Sprite[] { r1, r2, r3, r4 };
+        }
 
-            if (r1 != null && r2 != null && r3 != null && r4 != null)
+        // 2. Bike Riding Sprites (Anywheel Green) for Selected Character
+        rideIdleSprite = Resources.Load<Sprite>(prefix + "ride_idle") ?? Resources.Load<Sprite>("Sprites/player_ride_idle");
+        rideJumpSprite = Resources.Load<Sprite>(prefix + "ride_jump") ?? Resources.Load<Sprite>("Sprites/player_ride_jump");
+
+        Sprite rd1 = Resources.Load<Sprite>(prefix + "ride_1") ?? Resources.Load<Sprite>("Sprites/player_ride_1");
+        Sprite rd2 = Resources.Load<Sprite>(prefix + "ride_2") ?? Resources.Load<Sprite>("Sprites/player_ride_2");
+        Sprite rd3 = Resources.Load<Sprite>(prefix + "ride_3") ?? Resources.Load<Sprite>("Sprites/player_ride_3");
+        Sprite rd4 = Resources.Load<Sprite>(prefix + "ride_4") ?? Resources.Load<Sprite>("Sprites/player_ride_4");
+
+        if (rd1 != null && rd2 != null && rd3 != null && rd4 != null)
+        {
+            rideSprites = new Sprite[] { rd1, rd2, rd3, rd4 };
+        }
+
+        // 3. Fallback search if needed
+        if (idleSprite == null || runSprites == null || runSprites.Length == 0)
+        {
+            Sprite[] all = Resources.FindObjectsOfTypeAll<Sprite>();
+            foreach (var s in all)
             {
-                runSprites = new Sprite[] { r1, r2, r3, r4 };
+                if (s == null) continue;
+                if (s.name == $"char_{charId}_idle" || (idleSprite == null && s.name == "player_idle")) idleSprite = s;
+                else if (s.name == $"char_{charId}_dead" || (deadSprite == null && s.name == "player_dead")) deadSprite = s;
+                else if (s.name == $"char_{charId}_jump" || (jumpSprite == null && s.name == "player_jump")) jumpSprite = s;
             }
         }
 
-        // 2. Bike Riding Sprites (Anywheel Green)
-        if (rideIdleSprite == null) rideIdleSprite = Resources.Load<Sprite>("Sprites/player_ride_idle");
-        if (rideJumpSprite == null) rideJumpSprite = Resources.Load<Sprite>("Sprites/player_ride_jump");
-
-        if (rideSprites == null || rideSprites.Length == 0 || rideSprites[0] == null)
-        {
-            Sprite rd1 = Resources.Load<Sprite>("Sprites/player_ride_1");
-            Sprite rd2 = Resources.Load<Sprite>("Sprites/player_ride_2");
-            Sprite rd3 = Resources.Load<Sprite>("Sprites/player_ride_3");
-            Sprite rd4 = Resources.Load<Sprite>("Sprites/player_ride_4");
-
-            if (rd1 != null && rd2 != null && rd3 != null && rd4 != null)
-            {
-                rideSprites = new Sprite[] { rd1, rd2, rd3, rd4 };
-            }
-        }
-
-        // 3. Fallback: Search all loaded sprites by name
-        Sprite[] all = Resources.FindObjectsOfTypeAll<Sprite>();
-        foreach (var s in all)
-        {
-            if (s == null) continue;
-            if (s.name == "player_idle" && idleSprite == null) idleSprite = s;
-            else if (s.name == "player_dead" && deadSprite == null) deadSprite = s;
-            else if (s.name == "player_jump" && jumpSprite == null) jumpSprite = s;
-            else if (s.name == "player_ride_idle" && rideIdleSprite == null) rideIdleSprite = s;
-            else if (s.name == "player_ride_jump" && rideJumpSprite == null) rideJumpSprite = s;
-        }
-
-        if (sr != null && idleSprite != null && sr.sprite == null)
+        if (sr != null && idleSprite != null)
         {
             sr.sprite = idleSprite;
         }
