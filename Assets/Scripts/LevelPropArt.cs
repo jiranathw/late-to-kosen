@@ -7,7 +7,7 @@ using UnityEngine;
 [DefaultExecutionOrder(-80)]
 public class LevelPropArt : MonoBehaviour
 {
-    private static Sprite trap, spike, hidden;
+    private static Sprite trap, spike, hidden, pitSpikes;
     private static Sprite elevator, flowerpot, bicycle, ajarnBike, bikeRack, lizard;
     private static bool loaded;
     private bool applying;
@@ -48,9 +48,13 @@ public class LevelPropArt : MonoBehaviour
         string n = gameObject.name;
 
         if (n.StartsWith("Void_") || n.StartsWith("KillBlock"))
+        {
+            Stamp(sr, pitSpikes != null ? pitSpikes : (spike != null ? spike : trap), 2);
+            sr.drawMode = SpriteDrawMode.Tiled;
             return;
+        }
 
-        if (n.Contains("Lift") || n == "FakeGoal")
+        if (n.Contains("Lift") || n.Contains("Goal") || n == "FakeGoal" || n == "Goal")
         {
             Stamp(sr, elevator, 2);
             return;
@@ -123,6 +127,7 @@ public class LevelPropArt : MonoBehaviour
         ajarnBike = Load("spr_ajarn_bike");
         bikeRack = Load("spr_bike_rack");
         lizard = Load("spr_lizard");
+        pitSpikes = Load("spr_pit_spikes") ?? Load("spr_trap_spike");
         loaded = true;
     }
 

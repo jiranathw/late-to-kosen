@@ -32,6 +32,14 @@ public class FakeGoal : MonoBehaviour
     {
         sprite = GetComponent<SpriteRenderer>();
         sign = GetComponentInChildren<Signpost>(true);
+        if (sprite != null)
+        {
+            sprite.color = Color.white;
+            if (sprite.sprite == null || sprite.sprite.name.StartsWith("Square") || sprite.sprite.name.StartsWith("Knob"))
+            {
+                sprite.sprite = Resources.Load<Sprite>("Sprites/spr_elevator");
+            }
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)

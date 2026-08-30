@@ -19,9 +19,9 @@ public class Vehicle : MonoBehaviour
         despawnX = despawnAtX;
         playerTag = tagToKill;
 
-        // Face the way it is going. Bun's sprite will be drawn facing right.
+        // Face the way it is going. The car sprites are drawn facing left naturally.
         Vector3 s = transform.localScale;
-        s.x = Mathf.Abs(s.x) * (speed < 0f ? -1f : 1f);
+        s.x = Mathf.Abs(s.x) * (speed < 0f ? 1f : -1f);
         transform.localScale = s;
     }
 

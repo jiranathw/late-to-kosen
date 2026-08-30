@@ -29,18 +29,50 @@ public class HiddenTrap : MonoBehaviour
     private void Awake()
     {
         sprite = GetComponent<SpriteRenderer>();
-        Hide();
+        if (IsVoidSpike())
+        {
+            ShowSpikes();
+        }
+        else
+        {
+            Hide();
+        }
+    }
+
+    private bool IsVoidSpike()
+    {
+        string n = gameObject.name;
+        return n.StartsWith("Void_") || n.StartsWith("KillBlock");
+    }
+
+    private void ShowSpikes()
+    {
+        if (sprite == null) return;
+        sprite.enabled = true;
+        sprite.forceRenderingOff = false;
+        sprite.color = Color.white;
+        if (sprite.sprite == null || sprite.sprite.name.StartsWith("Square") || sprite.sprite.name.StartsWith("Knob"))
+        {
+            sprite.sprite = Resources.Load<Sprite>("Sprites/spr_pit_spikes") ?? Resources.Load<Sprite>("Sprites/spr_trap_spike");
+        }
+        sprite.drawMode = SpriteDrawMode.Tiled;
     }
 
     private void OnEnable()
     {
-        // LevelPropArt runs at -80 and can switch a renderer back on. Re-hide
-        // here so an untriggered trap never flashes into view on scene load.
-        if (!revealed) Hide();
+        if (IsVoidSpike())
+        {
+            ShowSpikes();
+        }
+        else if (!revealed)
+        {
+            Hide();
+        }
     }
 
     private void Start()
     {
+        if (IsVoidSpike()) ShowSpikes();
         GameManager.Instance?.RegisterTrap(transform.position.x);
     }
 

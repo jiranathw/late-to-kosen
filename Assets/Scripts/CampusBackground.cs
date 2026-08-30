@@ -51,7 +51,12 @@ public class CampusBackground : MonoBehaviour
         Camera cam = Camera.main;
         if (cam == null) return;
 
-        cam.backgroundColor = new Color(0.60f, 0.78f, 0.95f, 1f);   // morning sky
+        string sceneName = SceneManager.GetActiveScene().name;
+        bool isIndoor = (sceneName == "Level2");
+
+        cam.backgroundColor = isIndoor
+            ? new Color(0.40f, 0.70f, 0.95f, 1f)  // Blue sky matching KOSEN building photo
+            : new Color(0.60f, 0.78f, 0.95f, 1f);  // Morning sky
 
         Transform found = cam.transform.Find("KosenBackground");
         GameObject bgObj;
@@ -78,7 +83,8 @@ public class CampusBackground : MonoBehaviour
         if (sr == null) sr = bgObj.AddComponent<SpriteRenderer>();
 
         sr.sortingOrder = -100;
-        sr.color = new Color(1f, 1f, 1f, Opacity);
+        float opacity = isIndoor ? 0.50f : Opacity;
+        sr.color = new Color(1f, 1f, 1f, opacity);
         sr.sprite = FindSprite();
 
         CampusBackground fitter = bgObj.GetComponent<CampusBackground>();
@@ -89,7 +95,7 @@ public class CampusBackground : MonoBehaviour
     private static Sprite FindSprite()
     {
         string sceneName = SceneManager.GetActiveScene().name;
-        string spriteName = (sceneName == "Level1" || sceneName == "MainMenu") ? "background_stage1" : "background_kosen";
+        string spriteName = (sceneName == "Level1" || sceneName == "MainMenu") ? "background_stage1" : "background_stage2";
 
         // Try stage-specific sprite first
         Sprite loaded = Resources.Load<Sprite>("Sprites/" + spriteName);
@@ -101,7 +107,7 @@ public class CampusBackground : MonoBehaviour
             if (s != null && s.name == spriteName) return s;
         }
 
-        // Fallback to background_kosen if stage1 is missing
+        // Fallback to background_kosen if stage2 is missing
         Sprite fallback = Resources.Load<Sprite>("Sprites/background_kosen");
         if (fallback != null) return fallback;
 

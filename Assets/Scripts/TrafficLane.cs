@@ -104,15 +104,68 @@ public class TrafficLane : MonoBehaviour
         go.transform.localScale = Vector3.one;
 
         SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = vehicleSprite != null ? vehicleSprite : SolidSprite.Get();
-        sr.color = vehicleColor;
-        sr.sortingOrder = 6;
-        sr.drawMode = SpriteDrawMode.Sliced;
-        sr.size = vehicleSize;
+
+        Sprite targetSprite = vehicleSprite;
+        if (targetSprite == null)
+        {
+            string n = name.ToLower();
+            if (n.Contains("lane_a") || n.Contains("motor") || n.Contains("white") || transform.position.x < 110f)
+            {
+                // First car: White Honda Civic Sedan
+                targetSprite = Resources.Load<Sprite>("Sprites/spr_car_white") ?? Resources.Load<Sprite>("Sprites/spr_vehicle_motorbike");
+            }
+            else
+            {
+                // Second car: Green Porsche GT3 RS Supercar
+                targetSprite = Resources.Load<Sprite>("Sprites/spr_car_green") ?? Resources.Load<Sprite>("Sprites/spr_vehicle_car");
+            }
+
+            if (targetSprite == null)
+            {
+                Sprite[] all = Resources.FindObjectsOfTypeAll<Sprite>();
+                foreach (var s in all)
+                {
+                    if (s == null) continue;
+                    if ((n.Contains("lane_a") || transform.position.x < 110f) && (s.name == "spr_car_white" || s.name == "spr_vehicle_motorbike"))
+                        targetSprite = s;
+                    else if (s.name == "spr_car_green" || s.name == "spr_vehicle_car")
+                        targetSprite = s;
+                }
+            }
+        }
 
         BoxCollider2D box = go.AddComponent<BoxCollider2D>();
-        box.size = vehicleSize;
         box.isTrigger = true;
+
+        if (targetSprite != null)
+        {
+            sr.sprite = targetSprite;
+            sr.color = Color.white;
+            sr.drawMode = SpriteDrawMode.Simple;
+            sr.flipX = false;
+            
+            // Adjust box collider to match car sprite dimensions
+            Vector2 spriteSize = sr.bounds.size;
+            if (spriteSize.x > 0.1f && spriteSize.y > 0.1f)
+            {
+                box.size = new Vector2(spriteSize.x * 0.92f, spriteSize.y * 0.85f);
+                box.offset = new Vector2(0f, spriteSize.y * 0.05f);
+            }
+            else
+            {
+                box.size = vehicleSize;
+            }
+        }
+        else
+        {
+            sr.sprite = SolidSprite.Get();
+            sr.color = vehicleColor;
+            sr.drawMode = SpriteDrawMode.Sliced;
+            sr.size = vehicleSize;
+            box.size = vehicleSize;
+        }
+
+        sr.sortingOrder = 6;
 
         return go.AddComponent<Vehicle>();
     }

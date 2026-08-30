@@ -49,6 +49,19 @@ public class Teleporter : MonoBehaviour
         ? destinationTransform.position
         : new Vector3(destination.x, destination.y, 0f);
 
+    private void Awake()
+    {
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.color = Color.white;
+            if (sr.sprite == null || sr.sprite.name.StartsWith("Knob") || sr.sprite.name.StartsWith("Unity") || sr.sprite.name.Contains("Square"))
+            {
+                sr.sprite = Resources.Load<Sprite>("Sprites/spr_teleporter") ?? Resources.Load<Sprite>("Sprites/spr_heaven_door");
+            }
+        }
+    }
+
     private void Start()
     {
         // Counts as a hazard survived, credited at the exit.
