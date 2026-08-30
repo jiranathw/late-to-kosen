@@ -1,9 +1,11 @@
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
 // Clean, cinematic stage intro title card:
 // Displays "STAGE 1: LATE TO KOSEN" or "STAGE 2: INSIDE THE KOSEN" boldly in the center.
+// Uses a dark retro plaque with crisp outline to ensure high contrast against any background.
 // While displaying, hides all other HUD/corner UI for a clean camera view, and locks player/timer.
 // Once the intro fades out, gameplay and the stage timer begin!
 public class StageBannerUI : MonoBehaviour
@@ -54,8 +56,8 @@ public class StageBannerUI : MonoBehaviour
         // Subtle corner label that only appears AFTER the intro finishes
         corner = MakeText(canvasGo.transform, "StageLabel", 28f,
                           new Vector2(0.5f, 1f), new Vector2(0f, -28f),
-                          TextAlignmentOptions.Top, new Vector2(900f, 44f));
-        corner.color = new Color(1f, 1f, 1f, 0.75f);
+                          TextAlignmentOptions.Top, new Vector2(900f, 44f),
+                          Color.white, 0.2f, new Color32(0, 0, 0, 220));
 
         // Center Stage Title Card
         GameObject cardGo = new GameObject("TitleCard", typeof(RectTransform));
@@ -67,20 +69,45 @@ public class StageBannerUI : MonoBehaviour
         crt.offsetMin = Vector2.zero;
         crt.offsetMax = Vector2.zero;
 
-        cardTitle = MakeText(cardGo.transform, "CardTitle", 84f,
-                             new Vector2(0.5f, 0.5f), new Vector2(0f, 40f),
-                             TextAlignmentOptions.Center, new Vector2(1800f, 160f));
-        cardTitle.color = new Color(1f, 0.95f, 0.4f); // Golden retro yellow
+        // Retro Dark Plaque Background with Golden Pixel Border
+        GameObject plaqueBorder = new GameObject("PlaqueBorder", typeof(RectTransform));
+        plaqueBorder.transform.SetParent(cardGo.transform, false);
+        Image borderImg = plaqueBorder.AddComponent<Image>();
+        borderImg.color = new Color(1f, 0.86f, 0.20f, 0.95f); // Golden yellow pixel border
+        RectTransform brt = (RectTransform)plaqueBorder.transform;
+        brt.anchorMin = new Vector2(0.5f, 0.5f);
+        brt.anchorMax = new Vector2(0.5f, 0.5f);
+        brt.pivot = new Vector2(0.5f, 0.5f);
+        brt.anchoredPosition = Vector2.zero;
+        brt.sizeDelta = new Vector2(1300f, 220f);
 
-        cardSubtitle = MakeText(cardGo.transform, "CardSubtitle", 38f,
-                                new Vector2(0.5f, 0.5f), new Vector2(0f, -60f),
-                                TextAlignmentOptions.Center, new Vector2(1800f, 100f));
-        cardSubtitle.color = new Color(0.85f, 0.92f, 1f);
+        GameObject plaqueInner = new GameObject("PlaqueInner", typeof(RectTransform));
+        plaqueInner.transform.SetParent(plaqueBorder.transform, false);
+        Image innerImg = plaqueInner.AddComponent<Image>();
+        innerImg.color = new Color(0.04f, 0.07f, 0.14f, 0.92f); // Deep dark slate background
+        RectTransform irt = (RectTransform)plaqueInner.transform;
+        irt.anchorMin = Vector2.zero;
+        irt.anchorMax = Vector2.one;
+        irt.offsetMin = new Vector2(5f, 5f);
+        irt.offsetMax = new Vector2(-5f, -5f);
+
+        // Bold Retro Title with Dark Pixel Outline
+        cardTitle = MakeText(cardGo.transform, "CardTitle", 76f,
+                             new Vector2(0.5f, 0.5f), new Vector2(0f, 32f),
+                             TextAlignmentOptions.Center, new Vector2(1250f, 110f),
+                             new Color(1f, 0.93f, 0.25f, 1f), 0.35f, new Color32(10, 15, 30, 255));
+
+        // Crisp Subtitle with Dark Pixel Outline
+        cardSubtitle = MakeText(cardGo.transform, "CardSubtitle", 34f,
+                                new Vector2(0.5f, 0.5f), new Vector2(0f, -40f),
+                                TextAlignmentOptions.Center, new Vector2(1250f, 70f),
+                                new Color(0.92f, 0.96f, 1f, 1f), 0.30f, new Color32(10, 15, 30, 255));
     }
 
     private static TMP_Text MakeText(Transform parent, string name, float size,
                                      Vector2 anchor, Vector2 pos,
-                                     TextAlignmentOptions align, Vector2 dimensions)
+                                     TextAlignmentOptions align, Vector2 dimensions,
+                                     Color textColor, float outlineWidth = 0.25f, Color32? outlineColor = null)
     {
         GameObject go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
@@ -88,8 +115,10 @@ public class StageBannerUI : MonoBehaviour
         TextMeshProUGUI text = go.AddComponent<TextMeshProUGUI>();
         text.fontSize = size;
         text.alignment = align;
-        text.color = Color.white;
+        text.color = textColor;
         text.fontStyle = FontStyles.Bold;
+        text.outlineWidth = outlineWidth;
+        text.outlineColor = outlineColor ?? new Color32(0, 0, 0, 255);
 
         RectTransform rt = text.rectTransform;
         rt.anchorMin = anchor;

@@ -306,37 +306,6 @@ public class PlayerController : MonoBehaviour
 
         AudioManager.Instance?.PlayRespawnSFX();
         gm.NotifyRespawned();
-
-        // Start cool blinking / invulnerability effect
-        StartCoroutine(RespawnBlinkRoutine(invulnerabilityDuration));
-    }
-
-    private System.Collections.IEnumerator RespawnBlinkRoutine(float duration)
-    {
-        IsInvulnerable = true;
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr == null)
-        {
-            IsInvulnerable = false;
-            yield break;
-        }
-
-        float elapsed = 0f;
-        float blinkInterval = 0.09f;
-        bool isVisible = true;
-
-        while (elapsed < duration)
-        {
-            isVisible = !isVisible;
-            sr.enabled = isVisible;
-
-            yield return new WaitForSeconds(blinkInterval);
-            elapsed += blinkInterval;
-        }
-
-        sr.enabled = true;
-        sr.color = Color.white;
-        IsInvulnerable = false;
     }
 
     private void OnDrawGizmosSelected()
