@@ -75,13 +75,26 @@ public class AudioManager : MonoBehaviour
         stage1Clip = Resources.Load<AudioClip>("Audio/" + t1Name);
         if (stage1Clip == null)
         {
-            // Fallback search
             AudioClip[] all = Resources.FindObjectsOfTypeAll<AudioClip>();
             foreach (var clip in all)
             {
                 if (clip != null && clip.name == t1Name)
                 {
                     stage1Clip = clip;
+                    break;
+                }
+            }
+        }
+
+        stage2Clip = Resources.Load<AudioClip>("Audio/bgm_stage2_school_corridor");
+        if (stage2Clip == null)
+        {
+            AudioClip[] all = Resources.FindObjectsOfTypeAll<AudioClip>();
+            foreach (var clip in all)
+            {
+                if (clip != null && clip.name == "bgm_stage2_school_corridor")
+                {
+                    stage2Clip = clip;
                     break;
                 }
             }
@@ -114,10 +127,11 @@ public class AudioManager : MonoBehaviour
         }
         else if (sceneName == "Level2" || sceneName == "Level1_Krin")
         {
-            // In stage 2, keep playing energetic stage BGM or stage 1 track
-            if (stage1Clip != null && !bgmSource.isPlaying)
+            // Play dedicated Stage 2 peaceful-yet-tense school corridor BGM
+            AudioClip target = stage2Clip != null ? stage2Clip : stage1Clip;
+            if (target != null && bgmSource.clip != target)
             {
-                PlayBGM(stage1Clip);
+                PlayBGM(target);
             }
         }
     }
