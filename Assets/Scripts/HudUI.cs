@@ -2,8 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-// Lives, score, and whether you are stuck on a rented bicycle.
+// Lives (pixel hearts), score, and bike readout.
 // Hides during stage intro card so the opening scene and player character remain completely clean.
+// Features big retro heart icons (Full red heart -> Empty black frame upon death) and thick stroked text.
 public class HudUI : MonoBehaviour
 {
     private const int MaxLifeIcons = 10;
@@ -16,8 +17,8 @@ public class HudUI : MonoBehaviour
     private readonly Image[] lifeIcons = new Image[MaxLifeIcons];
     private PlayerController player;
 
-    private static readonly Color LifeFull  = new Color(1f, 0.30f, 0.38f, 1f);
-    private static readonly Color LifeEmpty = new Color(1f, 1f, 1f, 0.18f);
+    private Sprite heartFullSprite;
+    private Sprite heartEmptySprite;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -32,7 +33,25 @@ public class HudUI : MonoBehaviour
     private void Awake()
     {
         instance = this;
+        LoadHeartSprites();
         Build();
+    }
+
+    private void LoadHeartSprites()
+    {
+        heartFullSprite = Resources.Load<Sprite>("Sprites/heart_full");
+        heartEmptySprite = Resources.Load<Sprite>("Sprites/heart_empty");
+
+        if (heartFullSprite == null || heartEmptySprite == null)
+        {
+            Sprite[] all = Resources.FindObjectsOfTypeAll<Sprite>();
+            foreach (var s in all)
+            {
+                if (s == null) continue;
+                if (s.name == "heart_full" && heartFullSprite == null) heartFullSprite = s;
+                else if (s.name == "heart_empty" && heartEmptySprite == null) heartEmptySprite = s;
+            }
+        }
     }
 
     private void Build()
@@ -54,42 +73,45 @@ public class HudUI : MonoBehaviour
         hudGroup.blocksRaycasts = false;
         hudGroup.alpha = 0f;
 
-        // Lives: top-left
+        // Big Pixel Hearts for Lives: top-left (size 66x66, close together)
         for (int i = 0; i < MaxLifeIcons; i++)
         {
             GameObject go = new GameObject($"Life{i}");
             go.transform.SetParent(canvasGo.transform, false);
 
             Image img = go.AddComponent<Image>();
-            img.color = LifeFull;
+            if (heartFullSprite != null) img.sprite = heartFullSprite;
+            img.color = Color.white;
 
             RectTransform rt = img.rectTransform;
             rt.anchorMin = new Vector2(0f, 1f);
             rt.anchorMax = new Vector2(0f, 1f);
             rt.pivot = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(32f + i * 46f, -94f);
-            rt.sizeDelta = new Vector2(36f, 36f);
+            rt.anchoredPosition = new Vector2(28f + i * 48f, -94f);
+            rt.sizeDelta = new Vector2(66f, 66f);
 
             lifeIcons[i] = img;
             go.SetActive(false);
         }
 
         // Bike status
-        bikeText = MakeText(canvasGo.transform, "Bike", 26f,
-                            new Vector2(0f, 1f), new Vector2(32f, -140f),
-                            TextAlignmentOptions.TopLeft, new Vector2(560f, 40f));
-        bikeText.color = new Color(0.35f, 0.85f, 1f);
+        bikeText = MakeText(canvasGo.transform, "Bike", 30f,
+                            new Vector2(0f, 1f), new Vector2(30f, -160f),
+                            TextAlignmentOptions.TopLeft, new Vector2(560f, 44f),
+                            new Color(0.35f, 0.90f, 1f), 0.35f, new Color32(0, 0, 0, 255));
         bikeText.gameObject.SetActive(false);
 
-        // Score: top-right
-        scoreText = MakeText(canvasGo.transform, "Score", 38f,
-                             new Vector2(1f, 1f), new Vector2(-30f, -92f),
-                             TextAlignmentOptions.TopRight, new Vector2(600f, 100f));
+        // Score: top-right with bold dark stroke outline
+        scoreText = MakeText(canvasGo.transform, "Score", 40f,
+                             new Vector2(1f, 1f), new Vector2(-30f, -88f),
+                             TextAlignmentOptions.TopRight, new Vector2(600f, 100f),
+                             new Color(1f, 0.95f, 0.40f, 1f), 0.35f, new Color32(0, 0, 0, 255));
     }
 
     private static TMP_Text MakeText(Transform parent, string name, float size,
                                      Vector2 anchor, Vector2 pos,
-                                     TextAlignmentOptions align, Vector2 dimensions)
+                                     TextAlignmentOptions align, Vector2 dimensions,
+                                     Color textColor, float outlineWidth = 0.35f, Color32? outlineColor = null)
     {
         GameObject go = new GameObject(name);
         go.transform.SetParent(parent, false);
@@ -97,7 +119,17 @@ public class HudUI : MonoBehaviour
         TextMeshProUGUI text = go.AddComponent<TextMeshProUGUI>();
         text.fontSize = size;
         text.alignment = align;
-        text.color = Color.white;
+        text.color = textColor;
+        text.fontStyle = FontStyles.Bold;
+        text.outlineWidth = outlineWidth;
+        text.outlineColor = outlineColor ?? new Color32(0, 0, 0, 255);
+
+        if (text.fontMaterial != null)
+        {
+            text.fontMaterial.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            text.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, outlineColor ?? new Color32(0, 0, 0, 255));
+            text.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, outlineWidth);
+        }
 
         RectTransform rt = text.rectTransform;
         rt.anchorMin = anchor;
@@ -120,13 +152,32 @@ public class HudUI : MonoBehaviour
 
         if (hudGroup != null) hudGroup.alpha = 1f;
 
+        if (heartFullSprite == null || heartEmptySprite == null)
+        {
+            LoadHeartSprites();
+        }
+
         int total = Mathf.Clamp(gm.StartingLives, 0, MaxLifeIcons);
         int left = Mathf.Clamp(gm.Lives, 0, total);
         for (int i = 0; i < MaxLifeIcons; i++)
         {
             bool used = i < total;
             if (lifeIcons[i].gameObject.activeSelf != used) lifeIcons[i].gameObject.SetActive(used);
-            if (used) lifeIcons[i].color = i < left ? LifeFull : LifeEmpty;
+            if (used)
+            {
+                bool hasLife = i < left;
+                if (hasLife)
+                {
+                    if (heartFullSprite != null) lifeIcons[i].sprite = heartFullSprite;
+                    lifeIcons[i].color = Color.white;
+                }
+                else
+                {
+                    // Empty heart: hollow frame with red removed
+                    if (heartEmptySprite != null) lifeIcons[i].sprite = heartEmptySprite;
+                    lifeIcons[i].color = Color.white;
+                }
+            }
         }
 
         scoreText.text = $"Score: {gm.Score}\nTraps: {gm.TrapsSurvived}/{gm.TrapTotal}";

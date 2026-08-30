@@ -225,10 +225,6 @@ public class GameManager : MonoBehaviour
         return currentCheckpoint;
     }
 
-    [Header("Testing")]
-    [Tooltip("Keep true during development so deaths always respawn without game over screen")]
-    [SerializeField] private bool infiniteLives = true;
-
     // Returns true if the player still has a life left and should respawn.
     // Returns false when that was the last life, i.e. the run is over.
     public bool PlayerDied()
@@ -236,15 +232,13 @@ public class GameManager : MonoBehaviour
         if (IsGameOver) return false;
 
         DeathCount++;
-        if (!infiniteLives)
+        Lives--;
+
+        if (Lives <= 0)
         {
-            Lives--;
-            if (Lives <= 0)
-            {
-                Lives = 0;
-                LoseGame("lives");
-                return false;
-            }
+            Lives = 0;
+            LoseGame("lives");
+            return false;
         }
         return true;
     }
