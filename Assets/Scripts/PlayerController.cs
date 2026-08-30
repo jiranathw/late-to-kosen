@@ -67,7 +67,14 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Seconds to reach full speed, and to stop, while riding. On foot " +
              "the response stays instant.")]
     [SerializeField] private float bikeAccelTime = 0.35f;
+
+    [Header("Death & Respawn")]
+    [SerializeField] private float respawnDelay = 1.0f;
+    [SerializeField] private float invulnerabilityDuration = 1.6f;
+
     public bool IsRiding { get; private set; }
+    public bool IsInvulnerable { get; private set; }
+    private bool isDead;
 
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
@@ -119,6 +126,13 @@ public class PlayerController : MonoBehaviour
         {
             // Zero the input so the player doesn't drift or bank a jump while
             // the pause menu is up. Time.timeScale already froze the physics.
+            moveInput = 0f;
+            jumpBufferCounter = 0f;
+            return;
+        }
+
+        if (isDead)
+        {
             moveInput = 0f;
             jumpBufferCounter = 0f;
             return;
@@ -224,10 +238,32 @@ public class PlayerController : MonoBehaviour
     // check can never disagree about what happens next.
     public void Die()
     {
+        if (isDead || IsInvulnerable) return;
+
         GameManager gm = GameManager.Instance;
-        if (gm == null) return;
+        if (gm == null || gm.IsGameOver) return;
+
+        isDead = true;
         AudioManager.Instance?.PlayDeathSFX();
-        if (gm.PlayerDied()) Respawn();
+
+        rb.linearVelocity = Vector2.zero;
+        rb.simulated = false;
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null) sr.enabled = false;
+
+        bool hasLifeLeft = gm.PlayerDied();
+        if (hasLifeLeft)
+        {
+            StartCoroutine(RespawnRoutine(respawnDelay));
+        }
+    }
+
+    private System.Collections.IEnumerator RespawnRoutine(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        Respawn();
     }
 
     public void Respawn()
@@ -235,12 +271,17 @@ public class PlayerController : MonoBehaviour
         GameManager gm = GameManager.Instance;
         if (gm == null) return;
 
+        rb.simulated = true;
         rb.position = gm.GetCheckpoint();
         rb.linearVelocity = Vector2.zero;
         rb.gravityScale = baseGravityScale;
         coyoteCounter = 0f;
         jumpBufferCounter = 0f;
         rideVelocity = 0f;
+        isDead = false;
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null) sr.enabled = true;
 
         // Reset all level traps, falling rocks, and beams for the fresh attempt
         FallingRock.ResetAllRocks();
@@ -248,6 +289,36 @@ public class PlayerController : MonoBehaviour
 
         AudioManager.Instance?.PlayRespawnSFX();
         gm.NotifyRespawned();
+
+        // Start cool blinking / invulnerability effect
+        StartCoroutine(RespawnBlinkRoutine(invulnerabilityDuration));
+    }
+
+    private System.Collections.IEnumerator RespawnBlinkRoutine(float duration)
+    {
+        IsInvulnerable = true;
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr == null)
+        {
+            IsInvulnerable = false;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        float blinkInterval = 0.08f;
+        bool isDim = false;
+
+        while (elapsed < duration)
+        {
+            isDim = !isDim;
+            sr.color = isDim ? new Color(1f, 1f, 1f, 0.25f) : Color.white;
+
+            yield return new WaitForSeconds(blinkInterval);
+            elapsed += blinkInterval;
+        }
+
+        sr.color = Color.white;
+        IsInvulnerable = false;
     }
 
     private void OnDrawGizmosSelected()
