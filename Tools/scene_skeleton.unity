@@ -433,7 +433,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   moveSpeed: 7.5
-  jumpForce: 13.5
+  jumpForce: 12.6
   coyoteTime: 0.12
   jumpBufferTime: 0.12
   fallMultiplier: 1.8

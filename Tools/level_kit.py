@@ -17,17 +17,32 @@ file reads as a list of decisions rather than a list of coordinates.
 # PHYSICS
 #
 # These four numbers are the game. Everything else in this file is measured
-# against them, and they exist in three places that must agree:
+# against them, and they exist in four places that must agree:
+#     Assets/Scenes/Level1.unity           (what actually runs - the scene's
+#                                           serialised fields win over the C#
+#                                           defaults, so this one is not
+#                                           optional)
 #     Assets/Scripts/PlayerController.cs   (moveSpeed, jumpForce, fall/low mult)
 #     Tools/scene_skeleton.unity           (m_GravityScale, and the same fields)
 #     here                                 (what the verifier checks layouts on)
 #
+# Level2.unity is deliberately NOT in that list. Krin's scene carries his own
+# tuning - jumpForce 7 at gravityScale 1, moveSpeed 6 - and it is adopted, not
+# built, so nothing here reaches it and nothing here should.
+#
 # Retuned on the evening of 28 Aug. Sprint was removed and its speed became the only speed, and
 # the jump was rebuilt around Krin's stage - see the module docstring in
 # Tools/stage2.py for why his level forced this.
+#
+# Lowered 13.5 -> 12.6 on 30 Aug: the arc was clearing scenery it was never
+# meant to clear (the shaft walls, the kerb) and it read as a moon jump. Apex
+# 3.57 -> 3.11, reach 6.93 -> 6.47. What stops it going lower is stage 1's own
+# dismount gate: the kerb has to be walkable at 70% of the apex and unreachable
+# on a bike, and at 12.6 that window is 2.05u wide with 0.16u of slack. Below
+# about 12.0 the window closes and the bike section loses its exit.
 # ============================================================================
 GRAVITY = 9.81
-JUMP_FORCE = 13.5
+JUMP_FORCE = 12.6
 GRAVITY_SCALE = 2.6
 FALL_MULTIPLIER = 1.8
 WALK_SPEED = 7.5
@@ -98,7 +113,8 @@ P = {
     "Goal":         dict(guid="5503e4868b9e32640925196fa63b0062",
                          go=7496332456263003369, tf=8596259638677655486),
     "TrapHidden":   dict(guid="1614458680214683aa039ba0c7e3881b",
-                         go=6100000000000000101, tf=6100000000000000102),
+                         go=6100000000000000101, tf=6100000000000000102,
+                         mb=6100000000000000105),
     "PlatformFake": dict(guid="00451637c4b84e86886316ae1a3e24a0",
                          go=6100000000000000201, tf=6100000000000000202),
     "TrapSpike":    dict(guid="35c9464f042948d59b07c0d428239327",
@@ -189,14 +205,35 @@ def hidden(name, x, top):
     return Place("TrapHidden", name, (x, top + 0.2), (1.2, 0.4, 1))
 
 
-def kill_floor(name, x, y, w):
-    # The same invisible collider, stretched. Krin's KillBlock: the floor of a
-    # pit you are not supposed to survive landing in.
+def kill_floor(name, x, floor_top, w):
+    # The same invisible collider, stretched: the plug in a stairwell gap, so
+    # missing a jump is a death and not a free ride down to the floor below.
+    #
+    # TAKES THE TOP OF THE FLOOR IT PLUGS, NOT A CENTRE. It used to be given a
+    # y in the middle of the shaft, and that was wrong in a way nobody noticed
+    # until it was played: the floors are 5u apart, the slabs are 1u thick, so
+    # the headroom between one floor and the underside of the next is 4u - and
+    # the apex is 3.11u on top of a 1.0u body. A normal jump anywhere under the
+    # block put the player's head straight into it. Void_F1 was the worst: it
+    # hung over the main street, so a jump between x=14 and x=17 on the way out
+    # of the tower was an instant death for no reason at all.
+    #
+    # It now fills the slab band instead - floor_top-1.0 up to floor_top-0.1 -
+    # and carries onlyKillFromAbove, so a rise from underneath passes through it
+    # and only a fall INTO the gap kills.
+    #
+    # The 0.1u of daylight under the surface is not cosmetic: Fake_01_Doormat
+    # sits flush on top of the gap at x=13, and a block whose top touched the
+    # walking line would fire the instant the player stepped onto the doormat,
+    # killing him before the fake had a chance to drop out from under him. That
+    # reads as a bug. Falling in still catches it 0.1u later, which is one
+    # frame.
     #
     # Flagged "airborne" because it is the one hazard that is SUPPOSED to hang
     # over a hole - the verifier's "is it standing on ground?" rule would
     # otherwise reject every one of them.
-    return Place("TrapHidden", name, (x, y), (w, 0.5, 1), note="airborne")
+    return Place("TrapHidden", name, (x, floor_top - 0.55), (w, 0.9, 1),
+                 {"mb.onlyKillFromAbove": 1}, note="airborne")
 
 
 def spike(name, x, top):

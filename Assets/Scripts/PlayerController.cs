@@ -20,28 +20,37 @@ public class PlayerController : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 7.5f;
 
-    // JUMP. Retuned 28 Aug (evening) so Krin's stage is actually completable.
+    // JUMP. Lowered 30 Aug at TJ's request - the jump felt like a moon jump and
+    // the stairwell was being skipped by simply hopping over things.
     //
-    // Krin built his level against jumpForce 7 at gravityScale 1 - a 2.50u apex
-    // and a very floaty 1.43s in the air, giving an 8.56u flat reach. Our
-    // previous tuning (12 against 3.4) reached 3.45u, which could not cross his
-    // widest gap - 5.04u, between Ground_Start and GroundCheckpoint1 - even at
-    // a sprint, and could not climb his +2.1u steps at all. His stage was
-    // literally impossible on our physics, which is why this moved.
+    // History: Krin built his level against jumpForce 7 at gravityScale 1 - a
+    // 2.50u apex and a very floaty 1.43s in the air. Our old tuning (12 against
+    // 3.4) reached 3.45u, which could not cross his widest gap - 5.04u, between
+    // Ground_Start and GroundCheckpoint1 - and could not climb his +2.33u step
+    // at all. That is why 13.5 happened. It is also why this cannot go much
+    // below where it now sits.
     //
-    // 13.5 against 2.6 with fallMultiplier 1.8:
-    //     apex     3.57u      rise 0.529s    fall 0.395s
-    //     airtime  0.92s      flat reach     6.93u
-    // Krin's 5.04u gap is 73% of that reach, just inside the 75% design rule,
-    // and the apex clears his +2.1u steps with 1.4u to spare.
+    // 12.6 against 2.6 with fallMultiplier 1.8:
+    //     apex     3.11u      rise 0.494s    fall 0.368s
+    //     airtime  0.86s      flat reach     6.47u
     //
-    // gravityScale 2.6 is a Rigidbody2D property and lives in
-    // Tools/scene_skeleton.unity, not here - gravity belongs to the body.
-    // These numbers also exist as constants at the top of Tools/build_levels.py,
-    // which is what the design-rule checker measures every gap against. Change
-    // one, change all three.
+    // THIS DEFAULT IS NOT WHAT THE GAME RUNS ON. Every scene serialises its own
+    // copy of these fields, so editing the number here changes nothing on its
+    // own - Level1.unity carries jumpForce and Level2.unity carries Krin's
+    // untouched 7 against gravityScale 1, which is why his stage still plays
+    // exactly as he tuned it and is not affected by anything on this line. The
+    // value here is the one a NEW scene starts from, and it is kept in step so
+    // the next scene inherits stage 1's arc rather than a stale one.
+    //
+    // Stage 1 therefore has this number in four places that must agree:
+    //     here                          (the default for a new scene)
+    //     Assets/Scenes/Level1.unity    (what actually runs)
+    //     Tools/scene_skeleton.unity    (what a rebuild would emit)
+    //     Tools/level_kit.py            (what the design-rule checker measures)
+    // gravityScale 2.6 is a Rigidbody2D property and lives in the scene, not
+    // here - gravity belongs to the body.
     [Header("Jump")]
-    [SerializeField] private float jumpForce = 13.5f;
+    [SerializeField] private float jumpForce = 12.6f;
 
     [Header("Jump Feel")]
     [SerializeField] private float coyoteTime = 0.12f;

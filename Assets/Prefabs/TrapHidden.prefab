@@ -154,6 +154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HiddenTrap
   playerTag: Player
   revealedColor: {r: 1, g: 0.25, b: 0.3, a: 1}
+  onlyKillFromAbove: 0
 --- !u!114 &6100000000000000106
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -16,6 +16,21 @@ public class SpikeTrap : MonoBehaviour
     [SerializeField] private float retractDelay = 1.2f;
     [SerializeField] private float retractSpeed = 3f;
 
+    // SAME STOREY ONLY.
+    //
+    // The arming test used to be horizontal distance alone, and on a stacked
+    // stage that is not enough: stage 1 is a stairwell where every x is spanned
+    // by four floors, so Spike_02_Riser at (10, 10) sat directly under Hall_3
+    // and Room_Floor and shot up whenever the player walked past overhead. You
+    // then watched the trap you were about to walk into spring twice, from two
+    // floors up, which is the opposite of the point.
+    //
+    // A spike rests half a unit under its own surface, so the player standing on
+    // it is +1.0 away and at the top of a full jump is +4.11. The floor above
+    // puts them at +6.0 and the floor below at -4.0, so requiring the player to
+    // be above the spike and inside one floor's spacing separates all three.
+    [SerializeField] private float armWithinHeight = 5f;
+
     private Vector3 downPosition;
     private Vector3 upPosition;
     private Transform player;
@@ -42,7 +57,11 @@ public class SpikeTrap : MonoBehaviour
         if (gm != null && (gm.IsGameOver || gm.IsPaused)) return;
         if (player == null) return;
 
-        if (!up && Mathf.Abs(player.position.x - downPosition.x) < triggerDistance)
+        float dy = player.position.y - downPosition.y;
+        bool sameStorey = dy >= 0f && dy <= armWithinHeight;
+
+        if (!up && sameStorey &&
+            Mathf.Abs(player.position.x - downPosition.x) < triggerDistance)
         {
             up = true;
             retractTimer = retractDelay;
@@ -54,8 +73,12 @@ public class SpikeTrap : MonoBehaviour
 
             retractTimer -= Time.deltaTime;
             // Only go back down once the player has actually left, otherwise it
-            // retracts under their feet and the trap does nothing.
-            if (retractTimer <= 0f && Mathf.Abs(player.position.x - downPosition.x) > triggerDistance * 1.5f)
+            // retracts under their feet and the trap does nothing. Leaving the
+            // storey counts as leaving - it is how the spike re-hides itself
+            // after a death sends the player back to a checkpoint below.
+            bool gone = !sameStorey ||
+                        Mathf.Abs(player.position.x - downPosition.x) > triggerDistance * 1.5f;
+            if (retractTimer <= 0f && gone)
             {
                 up = false;
             }
@@ -68,6 +91,11 @@ public class SpikeTrap : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        // A resting spike is scenery. Its collider fills the slab and its top
+        // edge is flush with the walking surface, so without this guard simply
+        // stepping onto the tile kills you before the trap has done anything -
+        // which reads as a bug, not a troll. It only bites once it is moving.
+        if (!up) return;
         if (!other.CompareTag(playerTag)) return;
 
         PlayerController pc = other.GetComponent<PlayerController>();

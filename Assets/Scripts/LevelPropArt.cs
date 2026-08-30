@@ -86,9 +86,16 @@ public class LevelPropArt : MonoBehaviour
             return;
         }
 
+        // SORTING -2, NOT 3. A riser lives inside the slab it comes out of, so
+        // it has to draw BEHIND the floor tiles (which sit on order 0) or the
+        // player sees the fan sitting in the floorboards from across the room
+        // and the trap has nothing left to spring. TrapSpike.prefab was authored
+        // at -2 for exactly this reason and stamping it at 3 undid that.
+        // Above the surface nothing occludes it, so the moment it rises it is
+        // visible - which is the few frames of warning the trap is meant to give.
         if (n.StartsWith("Spike_") || n == "TrapSpike")
         {
-            Stamp(sr, NamedTrapSprite(n, spike != null ? spike : trap), 3);
+            Stamp(sr, NamedTrapSprite(n, spike != null ? spike : trap), -2);
             return;
         }
 

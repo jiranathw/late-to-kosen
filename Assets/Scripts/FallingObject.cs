@@ -76,9 +76,23 @@ public class FallingObject : MonoBehaviour, ITriggerable
     }
 
     // Self-arming for the same reason as ChaserHazard: no wiring in the scene,
-    // and it re-arms itself for the retry. Only fires when the player is
-    // approaching from the left, so walking back under a pot you already dodged
-    // does not drop a second one on you.
+    // and it re-arms itself for the retry.
+    //
+    // The proximity test USED to be x-only and one-directional
+    // (toGo > 0 && toGo <= triggerDistance), which broke twice over on a
+    // stacked-floor stage:
+    //
+    //   1. No y test at all. Stage 1 is a stairwell - every x in the tower is
+    //      spanned by four floors - so a player walking the floor ABOVE came
+    //      within triggerDistance of the pot's x and dropped it while standing
+    //      a whole storey away. By the time they came down it was long spent.
+    //   2. toGo > 0 meant "only fire when the player is to the LEFT", i.e. only
+    //      on a rightward approach. Floor 3 is walked RIGHT TO LEFT, so on the
+    //      one floor the pot is actually meant to threaten, toGo was negative
+    //      and it never fired at all.
+    //
+    // Now: the player has to be underneath the pot - which is what "on the
+    // floor below the balcony" means - and may arrive from either side.
     private void CheckProximity()
     {
         if (triggerDistance <= 0f) return;
@@ -90,8 +104,11 @@ public class FallingObject : MonoBehaviour, ITriggerable
             player = p.transform;
         }
 
-        float toGo = restPosition.x - player.position.x;
-        if (toGo > 0f && toGo <= triggerDistance) Trigger();
+        // Wrong storey. This single line is what stops the early drop.
+        if (player.position.y >= restPosition.y) return;
+
+        float toGo = Mathf.Abs(restPosition.x - player.position.x);
+        if (toGo <= triggerDistance) Trigger();
     }
 
     private void OnCollisionEnter2D(Collision2D c) { TryKill(c.collider); }

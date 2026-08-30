@@ -29,16 +29,16 @@ THE BIKE, AND WHY THERE IS ONLY ONE RACK
 
                              walk        ride
         speed                7.50       11.25
-        jump apex            3.57        2.17
-        max step-up          2.50        1.52
+        jump apex            3.11        1.89
+        max step-up          2.18        1.33
 
-    Riding is faster and jumps lower. So a 2.35u step is comfortable on foot and
-    flatly impossible on a bike - and the kerb at x=92 is 2.35u. Note that 2.35
-    is above the riding APEX of 2.17, not merely above the 70% safety margin:
+    Riding is faster and jumps lower. So a 2.05u step is comfortable on foot and
+    flatly impossible on a bike - and the kerb at x=92 is 2.05u. Note that 2.05
+    is above the riding APEX of 1.89, not merely above the 70% safety margin:
     a rider does not fail this jump by a hair on a bad attempt, he cannot reach
     the height at all, however well he times it. That is the difference between
     a wall and a hard jump, and TJ asked for a wall - "there's no way I'm gonna
-    jump over it and go on without parking". Meanwhile 2.35 is 66% of a walking
+    jump over it and go on without parking". Meanwhile 2.05 is 66% of a walking
     apex, so on foot it is not even a jump you think about. That is the
     exit gate, and it needs no key, no prompt and no rule: you park, or you do
     not continue. Tools/build_levels.py rule 9 knows about it and calls it a
@@ -114,10 +114,21 @@ GROUND = [
     # are pure collision. Every one of them blocks a fall that would otherwise
     # skip a floor or two: without the first, walking left out of your own
     # bedroom lands you on the street with the entire tower unplayed.
+    #
+    # THE THREE SHAFT WALLS ARE DELIBERATELY OVER-TALL. Each one used to stop
+    # exactly level with the floor it stands beside - Wall_Shaft_Right topped
+    # out at 20.0, which is Corridor_4's surface - and with a 5u flat run-up
+    # inside a 6.47u reach the wall was not a wall, it was a step. You jumped
+    # onto the top of it and walked over the shaft, skipping three floors of
+    # the stage. They now stand 4u proud of the surface beside them - 0.89u
+    # clear of the 3.11u apex, and the apex is measured at the feet - so there
+    # is no timing, no run-up and no bike setup that gets a player on top of
+    # one. Tools/build_levels.py cannot catch this class of bug: it checks the
+    # jumps you are MEANT to make, not the ones the scenery accidentally offers.
     ("Wall_Room_Left",    -0.75,  24.0,   1.5,  8.0),  # x -1.5 ..  0,  y 20..28
-    ("Wall_Shaft_Right",  31.75,  17.5,   1.5,  5.0),  # x 31   .. 32.5, y 15..20
-    ("Wall_F2_Left",      -3.75,  12.5,   1.5,  5.0),  # x -4.5 .. -3,  y 10..15
-    ("Wall_F1_Right",     34.75,   7.5,   1.5,  5.0),  # x 34   .. 35.5, y  5..10
+    ("Wall_Shaft_Right",  31.75,  20.5,   1.5, 11.0),  # x 31   .. 32.5, y 15..26
+    ("Wall_F2_Left",      -3.75,  14.5,   1.5,  9.0),  # x -4.5 .. -3,  y 10..19
+    ("Wall_F1_Right",     34.75,   9.5,   1.5,  9.0),  # x 34   .. 35.5, y  5..14
     ("Wall_Ground_Left",  -6.75,   2.5,   1.5,  6.0),  # x -7.5 .. -6,  y -0.5..5.5
 
     # -- THE STREET ----------------------------------------------------------
@@ -126,14 +137,22 @@ GROUND = [
     ("Ground_Soi_B",      45.0,   -0.5,  18.0,  1.0),  #  0.0   36 .. 54   gap 2
     ("Ground_Soi_C",      65.5,   -0.5,  17.0,  1.0),  #  0.0   57 .. 74   gap 3
     ("Ground_Soi_D",      84.5,   -0.5,  15.0,  1.0),  #  0.0   77 .. 92   gap 3
-    # THE DISMOUNT GATE. 2.35u: 66% of a walking apex, 108% of a riding one -
+    # THE DISMOUNT GATE. 2.05u: 66% of a walking apex, 108% of a riding one -
     # over the riding apex itself, so it is not a hard jump on a bike, it is an
-    # unreachable one. Everything from here to the goal sits 0.45u higher than
-    # the street for exactly this reason.
-    ("Kerb_Near",         96.25,   1.85,  8.5,  1.0),  #  2.35  92 .. 100.5
-    ("Road_ChalongKrung",111.0,    1.85, 22.0,  1.0),  #  2.35 100 .. 122
-    ("Kerb_Far",         125.75,   1.85,  8.5,  1.0),  #  2.35 121.5..130
-    ("Forecourt",        136.0,    2.85, 12.0,  1.0),  #  3.35 130 .. 142
+    # unreachable one. Everything from here to the goal sits 2.05u above the
+    # street for exactly this reason.
+    #
+    # Was 2.35 when the apex was 3.57. Lowering the jump to a 3.11 apex moved
+    # BOTH ends of the window it has to sit in: the walking step ceiling fell to
+    # 2.18 (so 2.35 was no longer a legal step at all) and the riding apex fell
+    # to 1.89. 2.05 is the height that is still comfortably walkable and still
+    # flatly unreachable on a bike. The margin over the riding apex is only
+    # 0.16u now, so if the jump is ever retuned again this number is the first
+    # thing to re-derive - the gate is the whole reason the bike section works.
+    ("Kerb_Near",         96.25,   1.55,  8.5,  1.0),  #  2.05  92 .. 100.5
+    ("Road_ChalongKrung",111.0,    1.55, 22.0,  1.0),  #  2.05 100 .. 122
+    ("Kerb_Far",         125.75,   1.55,  8.5,  1.0),  #  2.05 121.5..130
+    ("Forecourt",        136.0,    2.55, 12.0,  1.0),  #  3.05 130 .. 142
 
     # -- OFF THE ROUTE -------------------------------------------------------
     # The floor of the klong pit, seven units down. Flagged so the verifier does
@@ -158,7 +177,7 @@ ROUTE = [
     ("Ground_Soi_A2",     "Ground_Soi_B"),        # gap 2
     ("Ground_Soi_B",      "Ground_Soi_C"),        # gap 3   |
     ("Ground_Soi_C",      "Ground_Soi_D"),        # gap 3   | the chase
-    ("Ground_Soi_D",      "Kerb_Near"),           # step 2.35 - DISMOUNT GATE
+    ("Ground_Soi_D",      "Kerb_Near"),           # step 2.05 - DISMOUNT GATE
     ("Kerb_Near",         "Road_ChalongKrung"),
     ("Road_ChalongKrung", "Kerb_Far"),
     ("Kerb_Far",          "Forecourt"),           # step 1.00
@@ -194,15 +213,25 @@ OBJECTS = [
     # ========================================================================
     sign("Sign_04_Falling", 28.0, 15.0,
          "^  FALLING OBJECTS.  Hard hats are not provided."),
-    # Pre-triggered, Krin-style: it lets go 4.5u before you arrive, so it lands
-    # where you are ABOUT to be rather than where you are.
+    # POT TIMING. A pot rests at y 18.5 with a 0.35 half-height, so its underside
+    # starts 3.15u above the floor 3 surface and falls at gravityScale 3.4. It is
+    # level with a standing player's head 0.359s in and shatters on the pavement
+    # 0.435s in, and at 7.5u/s the player covers 2.69u and 3.26u in those times.
+    # A pot therefore only actually lands ON you if it is let go somewhere in
+    #     triggerDistance = 2.69 .. 3.26
+    # Anything larger shatters ahead of you and is a warning; anything smaller
+    # drops behind you and is nothing at all.
+    #
+    # Pre-triggered, Krin-style: this one lets go 4.5u out - past the top of that
+    # window on purpose - so it lands where you are ABOUT to be. It is the demo.
     pot("Pot_01_Warned", 24.0, 18.5, trigger=4.5),
     hidden("Hidden_02_Landing", 22.0, 15.0),
     trap("Trap_03_Extinguisher", 18.0, 15.0),
 
     # Same pot, sign removed. The stage teaches a rule and then takes it away,
-    # which is the second time it does that and not the last.
-    pot("Pot_02_Unwarned", 8.0, 18.5, trigger=4.5),
+    # which is the second time it does that and not the last - so this one is
+    # inside the window at 3.0 and is the one that actually kills you.
+    pot("Pot_02_Unwarned", 8.0, 18.5, trigger=3.0),
     trap("Trap_04_Recycling", 6.0, 15.0),
     hidden("Hidden_03_Landing", 10.0, 15.0),
 
@@ -227,16 +256,24 @@ OBJECTS = [
     # ========================================================================
     # THE FOUR SHAFT KILLBLOCKS
     #
-    # One under each mid-floor gap, two units down. A 2-3u gap is a jump you can
-    # make standing still, so falling in is a mistake rather than a difficulty
-    # spike - but it has to cost something, because the floor underneath every
-    # one of these gaps runs the other way, and dropping through would carry the
-    # player PAST content as a reward for missing a jump.
+    # One in each mid-floor gap. A 2-3u gap is a jump you can make standing
+    # still, so falling in is a mistake rather than a difficulty spike - but it
+    # has to cost something, because the floor underneath every one of these
+    # gaps runs the other way, and dropping through would carry the player PAST
+    # content as a reward for missing a jump.
+    #
+    # SECOND ARGUMENT IS THE TOP OF THE FLOOR THE GAP IS IN, not a centre.
+    # These used to hang two units down in the middle of the shaft, and that is
+    # a metre and a half inside the arc of anyone jumping on the floor BELOW -
+    # so a normal hop under one of them was a head-first death. Void_F1 hung
+    # over the open street: every jump between x=14 and x=17 on the way out of
+    # the tower killed you. They now plug the gap flush with the surface and
+    # only bite from above; see kill_floor in Tools/level_kit.py.
     # ========================================================================
-    kill_floor("Void_F4", 13.0, 18.0, 2.6),
-    kill_floor("Void_F3", 15.0, 13.0, 2.6),
-    kill_floor("Void_F2", 15.0,  8.0, 2.6),
-    kill_floor("Void_F1", 15.5,  3.0, 3.0),
+    kill_floor("Void_F4", 13.0, 20.0, 2.6),
+    kill_floor("Void_F3", 15.0, 15.0, 2.6),
+    kill_floor("Void_F2", 15.0, 10.0, 2.6),
+    kill_floor("Void_F1", 15.5,  5.0, 3.0),
 
     # ========================================================================
     # STREET LEVEL - and the same forty units for the fifth time, from below.
@@ -306,27 +343,27 @@ OBJECTS = [
     # = 13.0u, 4.5 x 2.8 = 12.6u), so a lane holds at most one vehicle and the
     # crossing is always solvable rather than usually solvable.
     # ========================================================================
-    checkpoint("Checkpoint_4_Kerb", 96.0, 2.35),
-    sign("Sign_13_LookRight", 99.0, 2.35,
+    checkpoint("Checkpoint_4_Kerb", 96.0, 2.05),
+    sign("Sign_13_LookRight", 99.0, 2.05,
          "CHALONG KRUNG ROAD.  Look right.", show=7.0),
-    lane("Lane_A_Motorbikes", 105.0, 2.80, 9.0, -6.5, 2.0, 0.4,
+    lane("Lane_A_Motorbikes", 105.0, 2.50, 9.0, -6.5, 2.0, 0.4,
          (1.8, 0.9), (0.95, 0.75, 0.2)),
-    lane("Lane_B_Pickups", 117.5, 2.90, 9.0, -4.5, 2.8, 1.7,
+    lane("Lane_B_Pickups", 117.5, 2.60, 9.0, -4.5, 2.8, 1.7,
          (2.6, 1.1), (0.85, 0.35, 0.3)),
 
-    checkpoint("Checkpoint_5_FarKerb", 125.0, 2.35),
-    trap("Trap_09_Bollard", 128.0, 2.35),
+    checkpoint("Checkpoint_5_FarKerb", 125.0, 2.05),
+    trap("Trap_09_Bollard", 128.0, 2.05),
 
     # ========================================================================
     # THE FORECOURT.  The last lie, and the cheapest: three seconds for walking
     # into the wrong lobby, which is what the previous hundred and forty units
     # have trained you to do.
     # ========================================================================
-    sign("Sign_14_Building", 132.0, 3.35, "BUILDING 12  -  main entrance  -->"),
-    fake_goal("FakeGoal_02_WrongBuilding", 134.5, 3.35,
+    sign("Sign_14_Building", 132.0, 3.05, "BUILDING 12  -  main entrance  -->"),
+    fake_goal("FakeGoal_02_WrongBuilding", 134.5, 3.05,
               "BUILDING 9  -  WRONG BUILDING", 3.0, "ENTRANCE"),
-    hidden("Hidden_06_Doorstep", 137.0, 3.35),
-    goal("Goal_Building12", 140.0, 3.35),
+    hidden("Hidden_06_Doorstep", 137.0, 3.05),
+    goal("Goal_Building12", 140.0, 3.05),
 ]
 
 # =============================================================================

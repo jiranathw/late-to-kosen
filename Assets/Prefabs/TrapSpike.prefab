@@ -158,6 +158,7 @@ MonoBehaviour:
   riseSpeed: 14
   retractDelay: 1.2
   retractSpeed: 3
+  armWithinHeight: 5
 --- !u!114 &6100000000000000306
 MonoBehaviour:
   m_ObjectHideFlags: 0
