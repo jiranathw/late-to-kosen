@@ -7,7 +7,9 @@ using UnityEngine;
 [DefaultExecutionOrder(-80)]
 public class LevelPropArt : MonoBehaviour
 {
-    private static Sprite trap, spike, hidden, pitSpikes;
+    private const float Stage2PitY = -3.4f;
+
+    private static Sprite trap, trapSchool, trapBasement, spike, hidden, pitSpikes;
     private static Sprite elevator, flowerpot, bicycle, ajarnBike, bikeRack, lizard;
     private static bool loaded;
     private bool applying;
@@ -109,16 +111,26 @@ public class LevelPropArt : MonoBehaviour
             return;
         }
 
-        if (n.StartsWith("Trap_") || n == "Trap")
+        // Krin's stage names traps Trap7 / Trap (3), not Trap_07. Matching
+        // only Trap_ left those as the red placeholder square.
+        if (n.StartsWith("FakeTrap"))
         {
-            Stamp(sr, NamedTrapSprite(n, trap), 3);
+            Stamp(sr, Load("spr_trap_fake") ?? trapSchool ?? trap, 5);
+            return;
+        }
+
+        if (n.StartsWith("Trap"))
+        {
+            Stamp(sr, TrapSpriteFor(n), 3);
         }
     }
 
     private static void EnsureLoaded()
     {
-        if (loaded && trap != null) return;
+        if (loaded && trap != null && trapSchool != null && trapBasement != null) return;
         trap = Load("spr_trap");
+        trapSchool = Load("spr_trap_school");
+        trapBasement = Load("spr_trap_basement");
         spike = Load("spr_trap_spike");
         hidden = Load("spr_trap_hidden");
         elevator = Load("spr_elevator");
@@ -134,6 +146,18 @@ public class LevelPropArt : MonoBehaviour
     private static Sprite Load(string name)
     {
         return Resources.Load<Sprite>("Sprites/" + name);
+    }
+
+    private Sprite TrapSpriteFor(string objectName)
+    {
+        if (gameObject.scene.name == "Level2")
+        {
+            Sprite fallback = trapSchool != null ? trapSchool : trap;
+            if (transform.position.y < Stage2PitY)
+                fallback = trapBasement != null ? trapBasement : fallback;
+            return NamedTrapSprite(objectName, fallback);
+        }
+        return NamedTrapSprite(objectName, trap);
     }
 
     private static Sprite NamedTrapSprite(string objectName, Sprite fallback)

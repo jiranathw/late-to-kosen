@@ -12,7 +12,11 @@ public class LevelSurfaceArt : MonoBehaviour
 {
     private const string ChildName = "_TiledArt";
 
-    private static Sprite dormFloor, dormWall, road, kerb;
+    // Stage 2's secret ending sits in the pit under the arena. Arena floor
+    // centre is y ~ -2.8; the first secret slab is y ~ -4.8.
+    private const float Stage2PitY = -3.4f;
+
+    private static Sprite dormFloor, dormWall, schoolFloor, schoolWall, basementFloor, basementWall, road, kerb;
     private static bool loaded;
     private bool applying;
 
@@ -60,28 +64,50 @@ public class LevelSurfaceArt : MonoBehaviour
 
         EnsureLoaded();
         string n = gameObject.name;
-        Sprite sprite = SpriteFor(n);
+
+        // FakeTrap is a solid Ground decoy. Tile it as a hazard so it reads
+        // as a kill box, but never attach TrapTrigger — walking on it is safe.
+        if (n.StartsWith("FakeTrap"))
+        {
+            StampProp(sr, Resources.Load<Sprite>("Sprites/spr_trap_fake"));
+            return;
+        }
+
+        Sprite sprite = SpriteFor(n, gameObject.scene.name, transform.position.y);
         if (sprite == null) return;
 
         TileOnChild(sr, sprite);
     }
 
-    private static Sprite SpriteFor(string n)
+    private static Sprite SpriteFor(string n, string scene, float y)
     {
+        bool indoor = scene == "Level2";
+        bool basement = indoor && y < Stage2PitY;
+
         if (n.StartsWith("Wall_"))
+        {
+            if (basement && basementWall != null) return basementWall;
+            if (indoor && schoolWall != null) return schoolWall;
             return dormWall != null ? dormWall : dormFloor;
+        }
         if (n.StartsWith("Ground_Soi") || n.StartsWith("Road_"))
             return road;
         if (n.StartsWith("Kerb_") || n == "Forecourt")
             return kerb != null ? kerb : road;
+        if (basement && basementFloor != null) return basementFloor;
+        if (indoor && schoolFloor != null) return schoolFloor;
         return dormFloor;
     }
 
     private static void EnsureLoaded()
     {
-        if (loaded && dormFloor != null) return;
+        if (loaded && dormFloor != null && schoolFloor != null && basementFloor != null) return;
         dormFloor = Resources.Load<Sprite>("Sprites/tile_dorm_floor");
         dormWall = Resources.Load<Sprite>("Sprites/tile_dorm_wall");
+        schoolFloor = Resources.Load<Sprite>("Sprites/tile_school_floor");
+        schoolWall = Resources.Load<Sprite>("Sprites/tile_school_wall");
+        basementFloor = Resources.Load<Sprite>("Sprites/tile_basement_floor");
+        basementWall = Resources.Load<Sprite>("Sprites/tile_basement_wall");
         road = Resources.Load<Sprite>("Sprites/tile_road");
         kerb = Resources.Load<Sprite>("Sprites/tile_kerb");
         loaded = dormFloor != null;
@@ -125,5 +151,19 @@ public class LevelSurfaceArt : MonoBehaviour
         vis.sortingLayerID = host.sortingLayerID;
         vis.sortingOrder = host.sortingOrder;
         vis.forceRenderingOff = false;
+    }
+
+    private static void StampProp(SpriteRenderer sr, Sprite sprite)
+    {
+        if (sr == null || sprite == null) return;
+        sr.forceRenderingOff = false;
+        sr.sprite = sprite;
+        sr.color = Color.white;
+        sr.drawMode = SpriteDrawMode.Simple;
+        sr.sortingOrder = Mathf.Max(sr.sortingOrder, 5);
+
+        Transform tiled = sr.transform.Find(ChildName);
+        if (tiled != null)
+            tiled.gameObject.SetActive(false);
     }
 }

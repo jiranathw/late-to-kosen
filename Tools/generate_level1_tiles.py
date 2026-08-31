@@ -683,6 +683,173 @@ def spr_lizard():
     return img
 
 
+def tile_school_floor():
+    """KOSEN corridor linoleum — cream tiles with a green walkable lip."""
+    grout = px("64748b")
+    a = px("e2e8f0")
+    b = px("cbd5e1")
+    c = px("94a3b8")
+    spec = px("f8fafc")
+    lip = px("16a34a")
+    lip_d = px("166534")
+    img = new_img()
+    for y in range(32):
+        for x in range(32):
+            if y <= 2:
+                img.putpixel((x, y), lip if y == 1 else lip_d)
+                continue
+            if x % 16 == 0 or y % 16 == 0:
+                img.putpixel((x, y), grout)
+                continue
+            tx, ty = x // 16, y // 16
+            base = a if (tx + ty) % 2 == 0 else b
+            n = hash_n(x, y, 17) % 13
+            if n == 0:
+                col = c
+            elif n == 1:
+                col = spec
+            else:
+                col = base
+            img.putpixel((x, y), col)
+    return img
+
+
+def tile_school_wall():
+    """Classroom plaster with a birch dado rail."""
+    plaster = px("f1f5f9")
+    plaster_d = px("e2e8f0")
+    wood = px("d97706")
+    wood_d = px("92400e")
+    wood_l = px("fbbf24")
+    img = new_img()
+    for y in range(32):
+        for x in range(32):
+            n = hash_n(x, y, 31) % 19
+            col = plaster_d if n == 0 else plaster
+            img.putpixel((x, y), col)
+    for y in range(22, 27):
+        for x in range(32):
+            if y == 22 or y == 26:
+                img.putpixel((x, y), wood_d)
+            elif y == 23:
+                img.putpixel((x, y), wood_l)
+            else:
+                img.putpixel((x, y), wood)
+    return img
+
+
+def tile_basement_floor():
+    """Secret-ending slab — wet concrete, moss, hairline cracks."""
+    dark = px("1e293b")
+    mid = px("334155")
+    light = px("475569")
+    moss = px("3f6212")
+    wet = px("0ea5e9")
+    crack = px("0f172a")
+    img = new_img()
+    for y in range(32):
+        for x in range(32):
+            n = hash_n(x, y, 61) % 23
+            if n == 0:
+                col = light
+            elif n < 8:
+                col = mid
+            else:
+                col = dark
+            if n == 2:
+                col = moss
+            elif n == 3:
+                col = wet
+            img.putpixel((x, y), col)
+    for x in range(32):
+        if 8 <= x <= 22:
+            img.putpixel((x, 14 + (x % 3) // 2), crack)
+        if 18 <= x <= 30:
+            img.putpixel((x, 24), crack)
+    return img
+
+
+def tile_basement_wall():
+    """Cinder-block basement wall."""
+    mortar = px("1e293b")
+    blocks = [px("475569"), px("334155"), px("64748b"), px("3f4f63"), px("52607a")]
+    stain = px("365314")
+    img = new_img()
+    bh, bw = 8, 16
+    for y in range(32):
+        row = y // bh
+        shift = (row % 2) * (bw // 2)
+        for x in range(32):
+            if y % bh == 0 or (x + shift) % bw == 0:
+                img.putpixel((x, y), mortar)
+            else:
+                bx = (x + shift) // bw
+                col = blocks[hash_n(bx, row, 77) % len(blocks)]
+                if hash_n(x, y, 88) % 17 == 0:
+                    col = stain
+                img.putpixel((x, y), col)
+    return img
+
+
+def spr_trap_school():
+    """School backpack — the honest visible trap on stage 2."""
+    img = new_img()
+    O = px("0f172a")
+    N = px("1e3a8a")
+    Nl = px("3b82f6")
+    Nd = px("172554")
+    R = px("dc2626")
+    Y = px("facc15")
+    C = px("f8fafc")
+    # body
+    fill_rect(img, 6, 8, 26, 30, O)
+    fill_rect(img, 7, 9, 25, 29, N)
+    fill_rect(img, 8, 10, 24, 16, Nl)
+    fill_rect(img, 8, 22, 24, 28, Nd)
+    # front pocket
+    fill_rect(img, 9, 16, 23, 24, O)
+    fill_rect(img, 10, 17, 22, 23, Nd)
+    fill_rect(img, 10, 17, 22, 19, Y)
+    # zipper pull
+    fill_rect(img, 15, 18, 17, 22, R)
+    # straps
+    fill_rect(img, 8, 6, 12, 10, O)
+    fill_rect(img, 9, 7, 11, 9, Nd)
+    fill_rect(img, 20, 6, 24, 10, O)
+    fill_rect(img, 21, 7, 23, 9, Nd)
+    # notebook peeking out
+    fill_rect(img, 12, 4, 20, 9, O)
+    fill_rect(img, 13, 5, 19, 8, C)
+    fill_rect(img, 13, 5, 14, 8, R)
+    return img
+
+
+def spr_trap_basement():
+    """Rusty barrel — secret-ending trap."""
+    img = new_img()
+    O = px("0f172a")
+    rust = px("9a3412")
+    rust_l = px("c2410c")
+    rust_d = px("7c2d12")
+    band = px("78716c")
+    drip = px("365314")
+    fill_rect(img, 7, 4, 25, 30, O)
+    fill_rect(img, 8, 5, 24, 29, rust)
+    for y in range(6, 29):
+        for x in range(9, 23):
+            n = hash_n(x, y, 99) % 9
+            if n == 0:
+                img.putpixel((x, y), rust_l)
+            elif n == 1:
+                img.putpixel((x, y), rust_d)
+    for y in (10, 18, 26):
+        fill_rect(img, 8, y, 24, y + 2, band)
+    fill_rect(img, 8, 5, 24, 8, rust_d)
+    fill_rect(img, 14, 28, 17, 32, drip)
+    fill_rect(img, 15, 27, 16, 31, drip)
+    return img
+
+
 META = """fileFormatVersion: 2
 guid: {guid}
 TextureImporter:
@@ -805,9 +972,15 @@ TextureImporter:
 SPRITES = {
     "tile_dorm_floor.png": tile_dorm_floor,
     "tile_dorm_wall.png": tile_dorm_wall,
+    "tile_school_floor.png": tile_school_floor,
+    "tile_school_wall.png": tile_school_wall,
+    "tile_basement_floor.png": tile_basement_floor,
+    "tile_basement_wall.png": tile_basement_wall,
     "tile_road.png": tile_road,
     "tile_kerb.png": tile_kerb,
     "spr_trap.png": spr_trap,
+    "spr_trap_school.png": spr_trap_school,
+    "spr_trap_basement.png": spr_trap_basement,
     "spr_trap_spike.png": spr_trap_spike,
     "spr_trap_hidden.png": spr_trap_hidden,
     "spr_trap_laundry.png": spr_trap_laundry,
