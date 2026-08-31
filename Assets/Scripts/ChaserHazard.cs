@@ -54,6 +54,39 @@ public class ChaserHazard : MonoBehaviour, ITriggerable
         // threat, not where it starts - otherwise the player scores it just by
         // standing still in front of it.
         GameManager.Instance?.RegisterTrap(restPosition.x + giveUpDistance);
+
+        // Subscribed in Start, not Awake: GameManager.Instance is assigned in
+        // GameManager.Awake and the order of two Awakes is not guaranteed.
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.PlayerRespawned += OnPlayerRespawned;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.PlayerRespawned -= OnPlayerRespawned;
+        }
+    }
+
+    // Without this, the ajarn only ever happens once per run.
+    //
+    // He is mid-chase when you die - `running` is true and he is somewhere out
+    // to the right of his post. Nothing resets him, so he keeps going until he
+    // has covered giveUpDistance and only then sleeps, by which time you have
+    // respawned at the checkpoint and walked back through his wake-up window.
+    // CheckProximity only fires while the player is within triggerDistance
+    // AHEAD of his rest position, so once you are past that band he is asleep
+    // for good and the rest of the run has no chase in it at all.
+    //
+    // Putting him back on his post the moment the player respawns re-arms the
+    // proximity check, and the second run through the soi plays like the first.
+    private void OnPlayerRespawned()
+    {
+        Sleep();
+        if (rearmOnDeath != null) rearmOnDeath.Rearm();
     }
 
     public void Trigger()

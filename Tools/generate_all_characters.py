@@ -324,150 +324,180 @@ def build_dead_grid():
         "................................", # 31
     ]
 
+# ---------------------------------------------------------------------------
+# RIDING FRAMES
+#
+# These used to be hand-typed grids, and the bike rows had drifted out to 38
+# characters - six columns wider than the canvas. render_grid() clips at x >= 32,
+# so the front wheel was sliced off in every ride sprite the game shipped: the
+# player mounted an Anywheel bike and half of it vanished.
+#
+# Composing them from stamps instead makes that class of bug impossible. _put()
+# refuses to write outside 32x32, the wheel is one 9x9 stamp placed twice, and
+# the whole bike is laid out from named coordinates (rear hub, bottom bracket,
+# head tube) so the geometry stays consistent across frames.
+#
+# Layout, all in canvas pixels: wheels are radius 4 at (6, 25) and (25, 25),
+# bottom bracket at (15, 25), saddle at y=16, handlebar at y=14. The rider sits
+# on top of that, head at rows 4-9. Nothing reaches column 31 or row 30.
+# ---------------------------------------------------------------------------
+
+RIDE_SIZE = 32
+
+def _ride_blank():
+    return [['.'] * RIDE_SIZE for _ in range(RIDE_SIZE)]
+
+def _put(g, x, y, ch):
+    if 0 <= x < RIDE_SIZE and 0 <= y < RIDE_SIZE:
+        g[y][x] = ch
+
+def _stamp(g, x0, y0, rows):
+    for dy, row in enumerate(rows):
+        for dx, ch in enumerate(row):
+            if ch != '.':
+                _put(g, x0 + dx, y0 + dy, ch)
+
+def _pixels(g, points, ch, dy=0):
+    for x, y in points:
+        _put(g, x, y + dy, ch)
+
+def _limb(g, a, b, ch, dy=0):
+    # Two-pixel-wide Bresenham. Thighs and shins read as sticks at one pixel.
+    x0, y0 = a[0], a[1] + dy
+    x1, y1 = b[0], b[1] + dy
+    dx, dyy = abs(x1 - x0), abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx - dyy
+    while True:
+        _put(g, x0, y0, ch)
+        _put(g, x0 + 1, y0, ch)
+        if (x0, y0) == (x1, y1):
+            break
+        e2 = 2 * err
+        if e2 > -dyy:
+            err -= dyy
+            x0 += sx
+        if e2 < dx:
+            err += dx
+            y0 += sy
+
+# Two spoke patterns, alternated between frames so the wheels visibly turn.
+_WHEEL_CROSS = [
+    "...MMM...",
+    ".MM.w.MM.",
+    ".M..w..M.",
+    "M...w...M",
+    "MwwwDwwwM",
+    "M...w...M",
+    ".M..w..M.",
+    ".MM.w.MM.",
+    "...MMM...",
+]
+_WHEEL_DIAG = [
+    "...MMM...",
+    ".MM...MM.",
+    ".Mw...wM.",
+    "M..w.w..M",
+    "M...D...M",
+    "M..w.w..M",
+    ".Mw...wM.",
+    ".MM...MM.",
+    "...MMM...",
+]
+
+# Chainstay, seat tube, seat stay, down tube, top tube, fork, head tube.
+_BIKE_FRAME = (
+    [(x, 25) for x in range(7, 15)]
+    + [(15, 24), (14, 23), (14, 22), (13, 21), (13, 20), (12, 19), (12, 18)]
+    + [(7, 24), (8, 23), (9, 22), (10, 21), (10, 20), (11, 19), (11, 18)]
+    + [(16, 24), (17, 23), (17, 22), (18, 21), (19, 20), (19, 19), (20, 18)]
+    + [(x, 18) for x in range(12, 15)]
+    + [(x, 17) for x in range(15, 20)]
+    + [(20, 16), (21, 16), (21, 15)]
+    + [(21, 17), (22, 18), (22, 19), (23, 20), (23, 21), (24, 22), (24, 23), (25, 24)]
+)
+
+_HEAD = [
+    "..kkkk..",
+    ".kHhHHk.",
+    ".kHHHSSk",
+    ".kHHSSkk",
+    "..kHSSSk",
+    "...kSSk.",
+]
+
+# Shoulders down to the hips. The last row is the seat of the shorts, which is
+# where both legs are hung from.
+_TORSO = [
+    ".....kkTTTkk....",
+    "....kTTTTTTkk...",
+    "...kTTTTTTTTk...",
+    "..kTTTTTTTTTkk..",
+    "..kTTTTTTTSSSSk.",
+    ".kkPPPPPkkkkkk..",
+]
+
+# Crank positions, clockwise from top, with the knee that goes with each.
+_PEDAL_POSES = {
+    0: ((15, 22), (17, 20)),
+    1: ((18, 25), (18, 20)),
+    2: ((15, 28), (17, 22)),
+    3: ((12, 25), (16, 21)),
+}
+_HIP = (12, 16)
+
+def _build_ride(phase, lift=0, tuck=False):
+    g = _ride_blank()
+    dy = -lift
+
+    _stamp(g, 2, 21 + dy, _WHEEL_CROSS if phase % 2 == 0 else _WHEEL_DIAG)
+    _stamp(g, 21, 21 + dy, _WHEEL_DIAG if phase % 2 == 0 else _WHEEL_CROSS)
+
+    _pixels(g, _BIKE_FRAME, 'g', dy)
+    _pixels(g, [(20, 14), (21, 14), (22, 14)], 'g', dy)   # handlebar
+    _pixels(g, [(23, 14)], 'G', dy)                        # grip
+    _pixels(g, [(24, 15)], 'y')                            # front reflector
+    _pixels(g, [(10, 16), (11, 16), (12, 16), (13, 16)], 'k', dy)  # saddle
+    _pixels(g, [(15, 25)], 'G', dy)                        # crank
+
+    # Far leg first in the darker trouser shade, so the near leg reads in front.
+    if tuck:
+        poses = [((13, 24), (15, 20), 'p'), ((17, 24), (18, 20), 'P')]
+    else:
+        far = _PEDAL_POSES[(phase + 2) % 4]
+        near = _PEDAL_POSES[phase % 4]
+        poses = [(far[0], far[1], 'p'), (near[0], near[1], 'P')]
+
+    for pedal, knee, ch in poses:
+        _limb(g, _HIP, knee, ch, dy)
+        _limb(g, knee, pedal, ch, dy)
+        _put(g, pedal[0], pedal[1] + dy, 'X')
+        _put(g, pedal[0] + 1, pedal[1] + dy, 'X')
+
+    _stamp(g, 10, 10 + dy, _TORSO)
+    _stamp(g, 15, 4 + dy, _HEAD)
+    _pixels(g, [(23, 14)], 'G', dy)   # grip again, over the hand
+
+    return [''.join(row) for row in g]
+
 def build_ride_grid_1():
-    # Student riding Anywheel green bicycle
-    return [
-        "................................", # 0
-        "................................", # 1
-        "................................", # 2
-        "........HHHHk...................", # 3 Student Head
-        ".......HHHHHkk..................", # 4
-        ".......HHHSSSkk........kbkb.....", # 5 Face & Basket
-        ".......HHSSSkSxk.......kbkbbk...", # 6
-        ".......HHSSSSkk........kbbbbk...", # 7
-        ".......kkkkSSSSkk......kbkbbk...", # 8
-        "......kkkkkkTSSSTkk....kkgkk....", # 9 Uniform Shirt & Arms holding bars
-        "......kkkkkkTTBTTTTkk..kg.......", # 10
-        ".......kkkkkTTTeTTTTkkgk........", # 11
-        "........kkkkPPeePTTTTkg.........", # 12 Belt & Shorts
-        ".........kkPPPPPPPkkkkg.........", # 13
-        "..........kPpkkPpPkkkg..........", # 14 Leg pedaling down
-        "..........kPk..kPpkkgggggGk.....", # 15
-        ".....kkkk.kSk...kSk...kggk..kkkk", # 16
-        "...kktMttkkSk...kSk........kktMttkk", # 17
-        "..kMwwwwwwMkXk..kXk.......kMwwwwwwMk", # 18 Shoe on pedal
-        ".kMwwwwywwwMkk..kk.......kMwwwwywwwMk", # 19
-        ".kMwwDwwwDwwMk.kbgbgk....kMwwDwwwDwwMk", # 20
-        ".kMwwDwwwDwwMk..kbbk.....kMwwDwwwDwwMk", # 21
-        ".kMwwwwDwwwDk....kk......kMwwwwDwwwDk.", # 22
-        ".kMwwwwDwwwDk............kMwwwwDwwwDk.", # 23
-        "..kMwwwwwwMk..............kMwwwwwwMk.", # 24
-        "...kMtttttMk................kMtttttMk.", # 25
-        ".....kkkk....................kkkk...", # 26
-        "................................", # 27
-        "................................", # 28
-        "................................", # 29
-        "................................", # 30
-        "................................", # 31
-    ]
+    return _build_ride(0)
 
 def build_ride_grid_2():
-    return [
-        "................................", # 0
-        "................................", # 1
-        "................................", # 2
-        "........HHHHk...................", # 3
-        ".......HHHHHkk..................", # 4
-        ".......HHHSSSkk........kbkb.....", # 5
-        ".......HHSSSkSxk.......kbkbbk...", # 6
-        ".......HHSSSSkk........kbbbbk...", # 7
-        ".......kkkkSSSSkk......kbkbbk...", # 8
-        "......kkkkkkTSSSTkk....kkgkk....", # 9
-        "......kkkkkkTTBTTTTkk..kg.......", # 10
-        ".......kkkkkTTTeTTTTkkgk........", # 11
-        "........kkkkPPeePTTTTkg.........", # 12
-        ".........kkPPPPPPPkkkkg.........", # 13
-        "..........kPPPPPPPkkkg..........", # 14 Midpoint
-        "..........kPkk.kPpkkgggggGk.....", # 15
-        ".....kkkk.kSk...kSk...kggk..kkkk", # 16
-        "...kktMttkkSk...kSk........kktMttkk", # 17
-        "..kMwDwDwwMkXk..kXk.......kMwDwDwwMk", # 18 Rotating spokes
-        ".kMwDwywwDwwkk..kk.......kMwDwywwDwwMk", # 19
-        ".kMwwwwwwwwwMk.kbgbgk....kMwwwwwwwwwMk", # 20
-        ".kMwDwDwDwwwMk..kbbk.....kMwDwDwDwwwMk", # 21
-        ".kMwwwwwwwwwk....kk......kMwwwwwwwwwk.", # 22
-        ".kMwDwDwDwwwk............kMwDwDwDwwwk.", # 23
-        "..kMwwwwwwMk..............kMwwwwwwMk.", # 24
-        "...kMtttttMk................kMtttttMk.", # 25
-        ".....kkkk....................kkkk...", # 26
-        "................................", # 27
-        "................................", # 28
-        "................................", # 29
-        "................................", # 30
-        "................................", # 31
-    ]
+    return _build_ride(1)
 
 def build_ride_grid_3():
-    return [
-        "................................", # 0
-        "................................", # 1
-        "................................", # 2
-        "........HHHHk...................", # 3
-        ".......HHHHHkk..................", # 4
-        ".......HHHSSSkk........kbkb.....", # 5
-        ".......HHSSSkSxk.......kbkbbk...", # 6
-        ".......HHSSSSkk........kbbbbk...", # 7
-        ".......kkkkSSSSkk......kbkbbk...", # 8
-        "......kkkkkkTSSSTkk....kkgkk....", # 9
-        "......kkkkkkTTBTTTTkk..kg.......", # 10
-        ".......kkkkkTTTeTTTTkkgk........", # 11
-        "........kkkkPPeePTTTTkg.........", # 12
-        ".........kkPPPPPPPkkkkg.........", # 13
-        "..........kPpkkPpPkkkg..........", # 14
-        "..........kPp..kPkkkgggggGk.....", # 15
-        ".....kkkk..kSk..kSk...kggk..kkkk", # 16
-        "...kktMttkk.kSk.kSk........kktMttkk", # 17
-        "..kMwwwwwwMk.kXkkXk.......kMwwwwwwMk", # 18
-        ".kMwwwwywwwMk.kk.kk......kMwwwwywwwMk", # 19
-        ".kMwwDwwwDwwMk.kbgbgk....kMwwDwwwDwwMk", # 20
-        ".kMwwDwwwDwwMk..kbbk.....kMwwDwwwDwwMk", # 21
-        ".kMwwwwDwwwDk....kk......kMwwwwDwwwDk.", # 22
-        ".kMwwwwDwwwDk............kMwwwwDwwwDk.", # 23
-        "..kMwwwwwwMk..............kMwwwwwwMk.", # 24
-        "...kMtttttMk................kMtttttMk.", # 25
-        ".....kkkk....................kkkk...", # 26
-        "................................", # 27
-        "................................", # 28
-        "................................", # 29
-        "................................", # 30
-        "................................", # 31
-    ]
+    return _build_ride(2)
+
+def build_ride_grid_4():
+    return _build_ride(3)
 
 def build_ride_jump_grid():
-    return [
-        "................................", # 0
-        "................................", # 1
-        "........HHHHk...................", # 2
-        ".......HHHHHkk..................", # 3
-        "......HHHHHHkkk........kbkb.....", # 4
-        ".......HHHSSSkk........kbkbbk...", # 5
-        ".......HHSSSkSxk.......kbbbbk...", # 6
-        ".......HHSSSSkk........kbkbbk...", # 7
-        ".......kkkkSSSSkk......kkgkk....", # 8
-        "......kkkkkkTSSSTkk....kg.......", # 9 Leaning forward
-        "......kkkkkkTTBTTTTkk..kgk......", # 10
-        ".......kkkkkTTTeTTTTkk.kg.......", # 11
-        "........kkkkPPeePTTTTkg.........", # 12
-        ".........kkPPPPPPPkkkkg.........", # 13
-        "..........kPPPPPPPkkkg..........", # 14 Tucked jump
-        "..........kPkk..kPkkgggggGk.....", # 15
-        ".....kkkk.kSk...kSk...kggk..kkkk", # 16
-        "...kktMttkkXk....Xk........kktMttkk", # 17
-        "..kMwDwDwwMkkk..kkk.......kMwDwDwwMk", # 18
-        ".kMwDwywwDwwMk.kbgbgk....kMwDwywwDwwMk", # 19
-        ".kMwwwwwwwwwMk..kbbk.....kMwwwwwwwwwMk", # 20
-        ".kMwDwDwDwwwMk...kk......kMwDwDwDwwwMk", # 21
-        ".kMwwwwwwwwwk............kMwwwwwwwwwk.", # 22
-        ".kMwDwDwDwwwk............kMwDwDwDwwwk.", # 23
-        "..kMwwwwwwMk..............kMwwwwwwMk.", # 24
-        "...kMtttttMk................kMtttttMk.", # 25
-        ".....kkkk....................kkkk...", # 26
-        "................................", # 27
-        "................................", # 28
-        "................................", # 29
-        "................................", # 30
-        "................................", # 31
-    ]
+    # Bike lifted three pixels off the road with the legs tucked - a bunny hop,
+    # not a pedal stroke.
+    return _build_ride(0, lift=3, tuck=True)
+
 
 def make_meta(guid):
     return f'''fileFormatVersion: 2
@@ -583,7 +613,7 @@ def generate_all():
         'ride_1': build_ride_grid_1(),
         'ride_2': build_ride_grid_2(),
         'ride_3': build_ride_grid_3(),
-        'ride_4': build_ride_grid_2(),
+        'ride_4': build_ride_grid_4(),
         'ride_idle': build_ride_grid_1(),
         'ride_jump': build_ride_jump_grid(),
     }
