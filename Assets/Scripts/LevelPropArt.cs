@@ -108,6 +108,14 @@ public class LevelPropArt : MonoBehaviour
         if (n.StartsWith("Hidden_") || n == "TrapHidden")
         {
             Stamp(sr, NamedTrapSprite(n, hidden != null ? hidden : trap), 2);
+
+            // HiddenTrap controls visibility on Level 1.
+            if (gameObject.scene.name == "Level1")
+            {
+                sr.enabled = false;
+                sr.forceRenderingOff = true;
+            }
+
             return;
         }
 
